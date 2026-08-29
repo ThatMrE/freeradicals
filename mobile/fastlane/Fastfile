@@ -1,0 +1,157 @@
+# Free Radicals — mobile release lanes.
+#
+# STATUS: these lanes are complete and reviewed, but there is no React Native
+# app in this repository yet, so nothing runs them today. `node
+# tools/deploy/mobile.mjs` is the gate that says so out loud. When the app is
+# scaffolded into mobile/app, these become live with no changes beyond paths.
+#
+# Both stores are authenticated with a key rather than a password:
+#   iOS      App Store Connect API key (.p8) — no 2FA prompt, no session expiry
+#   Android  a Play Console service account JSON with "Release manager" scope
+#
+# Two 2026 requirements are enforced here rather than discovered at review:
+#   Since 28 Apr 2026 App Store Connect rejects builds not made with the
+#   iOS 26 SDK (so: Xcode 26).
+#   From 31 Aug 2026 Google Play requires new submissions to target API 36.
+
+require "json"
+
+default_platform(:ios)
+
+APP_DIR = File.expand_path("../app", __dir__)
+CONFIG  = JSON.parse(File.read(File.expand_path("../release.config.json", __dir__)))
+
+before_all do
+  UI.user_error!("mobile/app does not exist yet — see docs/RELEASING.md") unless Dir.exist?(APP_DIR)
+end
+
+platform :ios do
+  desc "Build and upload to TestFlight"
+  lane :beta do
+    require_xcode!
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_content: ENV.fetch("ASC_KEY_P8"),   # the .p8 contents, not a path
+      is_key_content_base64: true,
+      in_house: false
+    )
+
+    # The Screen Time shield needs the Family Controls entitlement, which Apple
+    # grants on request. Signing will fail without it; fail early and say why.
+    verify_entitlements!
+
+    increment_build_number(
+      build_number: latest_testflight_build_number(api_key: api_key) + 1,
+      xcodeproj: "#{APP_DIR}/ios/FreeRadicals.xcodeproj"
+    )
+
+    build_app(
+      workspace: "#{APP_DIR}/ios/FreeRadicals.xcworkspace",
+      scheme: "FreeRadicals",
+      export_method: "app-store",
+      # The shield and monitor extensions ship inside the app.
+      include_bitcode: false
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: false,
+      changelog: release_notes
+    )
+  end
+
+  desc "Promote the current TestFlight build to the App Store"
+  lane :release do
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_content: ENV.fetch("ASC_KEY_P8"),
+      is_key_content_base64: true
+    )
+    upload_to_app_store(
+      api_key: api_key,
+      submit_for_review: true,
+      automatic_release: false,          # a human decides when it goes live
+      precheck_include_in_app_purchases: false,
+      submission_information: {
+        add_id_info_uses_idfa: false     # no ads, no attribution, no IDFA
+      }
+    )
+  end
+
+  def require_xcode!
+    required = CONFIG.dig("ios", "xcode")
+    actual = `xcodebuild -version`.lines.first.to_s[/\d+/]
+    return if actual && actual.to_i >= required.to_i
+
+    UI.user_error!(
+      "Xcode #{required} or later is required (found #{actual || 'none'}). " \
+      "#{CONFIG.dig('ios', 'sdkNote')}"
+    )
+  end
+
+  def verify_entitlements!
+    needed = CONFIG.dig("ios", "entitlements")
+    path = "#{APP_DIR}/ios/FreeRadicals/FreeRadicals.entitlements"
+    UI.user_error!("missing #{path}") unless File.exist?(path)
+    contents = File.read(path)
+    needed.each do |key|
+      next if contents.include?(key)
+      UI.user_error!("entitlement #{key} is missing. #{CONFIG.dig('ios', 'entitlementNote')}")
+    end
+  end
+end
+
+platform :android do
+  desc "Build an AAB and upload to the internal track"
+  lane :beta do
+    require_target_sdk!
+
+    gradle(
+      project_dir: "#{APP_DIR}/android",
+      task: "bundle",
+      build_type: "Release"
+    )
+
+    upload_to_play_store(
+      track: CONFIG.dig("android", "track"),
+      json_key_data: ENV.fetch("PLAY_SERVICE_ACCOUNT_JSON"),
+      aab: lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
+      skip_upload_apk: true,             # Play has required AABs for new apps since 2021
+      release_status: "draft"
+    )
+  end
+
+  desc "Promote the internal build to production"
+  lane :release do
+    upload_to_play_store(
+      track: "internal",
+      track_promote_to: "production",
+      json_key_data: ENV.fetch("PLAY_SERVICE_ACCOUNT_JSON"),
+      skip_upload_aab: true,
+      skip_upload_metadata: false,
+      # A staged rollout means a bad overlay can be halted before it reaches
+      # everyone. The overlay is the whole product on Android; do not skip this.
+      rollout: "0.1"
+    )
+  end
+
+  def require_target_sdk!
+    required = CONFIG.dig("android", "targetSdk")
+    gradle_file = "#{APP_DIR}/android/app/build.gradle"
+    UI.user_error!("missing #{gradle_file}") unless File.exist?(gradle_file)
+    found = File.read(gradle_file)[/targetSdk(?:Version)?\s*=?\s*(\d+)/, 1]
+    return if found && found.to_i >= required
+
+    UI.user_error!(
+      "targetSdk is #{found || 'unset'}, needs #{required}. #{CONFIG.dig('android', 'targetSdkNote')}"
+    )
+  end
+end
+
+def release_notes
+  path = File.expand_path("../../CHANGELOG.md", __dir__)
+  File.exist?(path) ? File.read(path)[/\A.*?(?=\n#{'#'} )/m].to_s.strip : "See the repository for changes."
+end

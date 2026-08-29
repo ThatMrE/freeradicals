@@ -1,0 +1,10 @@
+# Identifiers are the single source of truth in mobile/release.config.json so
+# the readiness gate and the lanes cannot disagree.
+require "json"
+config = JSON.parse(File.read(File.expand_path("../release.config.json", __dir__)))
+
+app_identifier config.dig("ios", "bundleId")
+package_name   config.dig("android", "applicationId")
+
+# apple_id and team_id are supplied by the App Store Connect API key at runtime;
+# there is no password or 2FA session to keep alive.

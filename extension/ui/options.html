@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Free Radicals — settings</title>
+  <link rel="stylesheet" href="ui.css" />
+  <style>
+    body { max-width: 680px; margin: 0 auto; padding: 40px 24px 80px; display: flex; flex-direction: column; gap: 32px; }
+    header h1 { font-size: 24px; }
+    header p { color: var(--muted); margin-top: 8px; max-width: 56ch; }
+    section { border: 1px solid var(--line); border-radius: 14px; padding: 20px; background: var(--panel); }
+    .field { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; }
+    .field + .field { border-top: 1px solid var(--line); }
+    .field .t { font-weight: 550; }
+    .field .d { color: var(--muted); font-size: 12.5px; max-width: 46ch; }
+    .platforms { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px 16px; }
+    .saved { color: var(--good); font-size: 12.5px; opacity: 0; transition: opacity .2s ease; }
+    .saved[data-on="1"] { opacity: 1; }
+    #welcome { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+    #welcome ol { margin: 12px 0 0; padding-left: 20px; color: var(--muted); line-height: 1.9; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Free Radicals</h1>
+    <p>Feeds stay closed until you publish something. A post buys you one timed window; when it ends, the feed closes and the next window costs another post.</p>
+  </header>
+
+  <section id="welcome" hidden>
+    <h2 style="color:var(--accent)">You're set up</h2>
+    <ol>
+      <li>Open a social feed — it will be covered by the block screen.</li>
+      <li>Write something real and press <b>Post &amp; open feed</b>.</li>
+      <li>Scroll for your window. When it hits zero, the feed closes again.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>The deal</h2>
+    <div class="field">
+      <div><div class="t">Window length</div><div class="d">Fixed gives every post the same window. Earned starts at the base and grows with how much you write, so a longer post buys a longer look.</div></div>
+      <select id="durationMode" style="width:auto">
+        <option value="earned">Earned by length</option>
+        <option value="fixed">Fixed</option>
+      </select>
+    </div>
+    <div class="field">
+      <div><div class="t">Base window</div><div class="d">What a post that just clears the minimum buys.</div></div>
+      <div class="row"><input type="number" id="unlockMinutes" min="1" max="120" /><span class="muted small">min</span></div>
+    </div>
+    <div class="field">
+      <div><div class="t">Minimum length</div><div class="d">Characters required before the Post button turns on.</div></div>
+      <div class="row"><input type="number" id="minChars" min="1" max="2000" /><span class="muted small">chars</span></div>
+    </div>
+    <div class="field earned-only">
+      <div><div class="t">Earn a step every</div><div class="d">Characters beyond the minimum that buy one more step of feed.</div></div>
+      <div class="row"><input type="number" id="earnPerChars" min="5" max="2000" /><span class="muted small">chars</span></div>
+    </div>
+    <div class="field earned-only">
+      <div><div class="t">Each step is worth</div><div class="d">Minutes added per step earned.</div></div>
+      <div class="row"><input type="number" id="earnMinutesPerStep" min="1" max="60" /><span class="muted small">min</span></div>
+    </div>
+    <div class="field earned-only">
+      <div><div class="t">Never longer than</div><div class="d">The ceiling, however much you write.</div></div>
+      <div class="row"><input type="number" id="maxUnlockMinutes" min="1" max="240" /><span class="muted small">min</span></div>
+    </div>
+    <div class="field earned-only">
+      <div><div class="t" id="earnExample">&nbsp;</div><div class="d">A worked example with your current numbers.</div></div>
+    </div>
+    <div class="field">
+      <div><div class="t">Warn me near the end</div><div class="d">The countdown turns red with this long to go.</div></div>
+      <div class="row"><input type="number" id="warnAtSeconds" min="0" max="3600" /><span class="muted small">sec</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Honesty</h2>
+    <label class="check">
+      <input type="checkbox" id="requirePublishProof" />
+      <span><span class="t">Require proof of publishing</span><br />
+      <span class="d">Writing in the block screen is not enough — the timer only starts once the extension sees your post actually go live on the site. Strict, and dependent on each site's internals; leave it off if a network changes and stops being detected.</span></span>
+    </label>
+    <div class="field">
+      <div><div class="t">Escape hatch after</div><div class="d">How long to wait before offering “I posted it anyway”. Using it records the post as unverified.</div></div>
+      <div class="row"><input type="number" id="proofOverrideAfterSeconds" min="10" max="3600" /><span class="muted small">sec</span></div>
+    </div>
+    <label class="check">
+      <input type="checkbox" id="publishAssist" />
+      <span><span class="t">Help me publish it</span><br />
+      <span class="d">Copy the text to the clipboard and offer the site's own composer, prefilled, right after you post.</span></span>
+    </label>
+    <label class="check">
+      <input type="checkbox" id="blockDuplicatePosts" />
+      <span><span class="t">Refuse repeats</span><br />
+      <span class="d">The same text can't buy a second window. Casing and spacing changes don't count as new.</span></span>
+    </label>
+    <div class="field">
+      <div><div class="t">Repeats remembered</div><div class="d">How many recent posts the repeat check looks back through. 0 disables it.</div></div>
+      <input type="number" id="duplicateLookback" min="0" max="500" />
+    </div>
+  </section>
+
+  <section>
+    <h2>Where it applies</h2>
+    <div class="platforms" id="platforms"></div>
+  </section>
+
+  <section>
+    <h2>Block screen</h2>
+    <label class="check">
+      <input type="checkbox" id="showQuotes" />
+      <span><span class="t">Show a quote</span><br /><span class="d">A line about making things instead of an empty page.</span></span>
+    </label>
+  </section>
+
+  <section>
+    <h2>Your writing</h2>
+    <p class="small muted" id="journalSummary">Nothing written yet.</p>
+    <div class="row" style="margin-top:14px">
+      <button class="ghost" id="export" type="button">Export as JSON</button>
+      <button class="ghost" id="clear" type="button">Delete everything</button>
+    </div>
+    <p class="small muted" style="margin-top:12px">Everything stays in this browser profile. Nothing is uploaded anywhere.</p>
+  </section>
+
+  <div class="spread">
+    <span class="saved" id="saved">Saved</span>
+    <span class="small muted">v0.1.0</span>
+  </div>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

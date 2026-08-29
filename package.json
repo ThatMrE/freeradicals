@@ -10,6 +10,6 @@
     "build": "node tools/build-manifest.mjs && node tools/make-icons.mjs"
   },
   "devDependencies": {
-    "playwright": "^1.56.0"
+    "playwright": "^1.56.1"
   }
 }

@@ -1,5 +1,7 @@
 # Free Radicals
 
+[![CI](https://github.com/ThatMrE/freeradicals/actions/workflows/ci.yml/badge.svg)](https://github.com/ThatMrE/freeradicals/actions/workflows/ci.yml)
+
 **Social feeds stay closed until you publish something.** Writing a post buys
 you a timed window. When the timer hits zero the feed closes, and the next
 window costs another post.
@@ -110,11 +112,19 @@ gets one number and needs no running JavaScript. Full guide:
 ## Development
 
 ```bash
+npm ci                # only devDependency is Playwright; the extension itself
+                      #   ships no dependencies and needs no build
 npm test              # 34 unit tests: the state machine, earned windows,
                       #   anti-cheat, portability
 npm run test:e2e      # loads the extension into real Chromium and drives it
 npm run build         # regenerate manifest.json, route/signal tables, icons
 ```
+
+Both suites run on every push and pull request
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)), along with a check
+that the generated files still match `core/platforms.js` — so a network added
+to the registry without a rebuild fails CI instead of shipping a manifest that
+never matches its hosts.
 
 The e2e test is the one that matters: it stubs `x.com`, confirms the feed is
 blocked on arrival, posts through the popup, watches the feed open, expires the

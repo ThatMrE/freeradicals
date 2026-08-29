@@ -13,6 +13,8 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
+import { crc32 } from './crc32.mjs';
+
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'extension', 'icons');
 const SS = 4; // supersampling factor
 const ACCENT = [124, 140, 255];
@@ -71,23 +73,7 @@ function render(size) {
   return rgba;
 }
 
-/* --- minimal PNG encoder -------------------------------------------------- */
-const CRC_TABLE = (() => {
-  const t = new Int32Array(256);
-  for (let n = 0; n < 256; n += 1) {
-    let c = n;
-    for (let k = 0; k < 8; k += 1) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-    t[n] = c;
-  }
-  return t;
-})();
-
-function crc32(buf) {
-  let c = -1;
-  for (const byte of buf) c = CRC_TABLE[(c ^ byte) & 0xff] ^ (c >>> 8);
-  return (c ^ -1) >>> 0;
-}
-
+/* --- minimal PNG encoder (CRC shared with the ZIP writer) ----------------- */
 function chunk(type, data) {
   const len = Buffer.alloc(4);
   len.writeUInt32BE(data.length);

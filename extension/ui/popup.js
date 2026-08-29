@@ -62,27 +62,49 @@ function render() {
   $('sWeek').textContent = snap.stats.week;
   $('sWords').textContent = snap.stats.words.toLocaleString();
 
-  const recent = snap.journal.slice(0, 8);
-  $('recent').innerHTML = recent.length
-    ? recent.map((e) => {
-      const platform = getPlatform(e.platformId);
-      return `<div class="entry">
-        <div>${escapeHtml(e.text).slice(0, 220)}</div>
-        <div class="when">
-          <span>${formatRelative(e.at, snap.now)}</span>
-          ${platform ? `<span class="badge">${escapeHtml(platform.name)}</span>` : ''}
-          ${e.verified ? '<span class="badge" data-verified="1">published</span>' : ''}
-        </div>
-      </div>`;
-    }).join('')
-    : '<p class="small muted">Nothing yet. The first post is the hard one.</p>';
+  renderRecent(snap.journal.slice(0, 8), snap.now);
 
   updateCount();
 }
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/** Build an element. Nothing here parses HTML, so nothing here can inject it. */
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+/**
+ * The journal contains text the user wrote. Building nodes and assigning
+ * textContent means it can never be parsed as markup — which is both safer
+ * than escaping by hand and what AMO's reviewers look for.
+ */
+function renderRecent(entries, now) {
+  const host = $('recent');
+  if (!entries.length) {
+    host.replaceChildren(el('p', 'small muted', 'Nothing yet. The first post is the hard one.'));
+    return;
+  }
+
+  host.replaceChildren(...entries.map((entry) => {
+    const row = el('div', 'entry');
+    row.append(el('div', null, entry.text.slice(0, 220)));
+
+    const when = el('div', 'when');
+    when.append(el('span', null, formatRelative(entry.at, now)));
+
+    const platform = getPlatform(entry.platformId);
+    if (platform) when.append(el('span', 'badge', platform.name));
+    if (entry.verified) {
+      const badge = el('span', 'badge', 'published');
+      badge.dataset.verified = '1';
+      when.append(badge);
+    }
+
+    row.append(when);
+    return row;
+  }));
 }
 
 $('input').addEventListener('input', () => { $('error').textContent = ''; updateCount(); });

@@ -1,5 +1,6 @@
 import { createGate } from '../../core/index.js';
 import { blockedAppIds } from './appIds.js';
+import { attachNativeMirror } from './nativeMirror.js';
 import { createAsyncStorageAdapter } from './storage.js';
 
 /**
@@ -28,27 +29,5 @@ export function createMobileGate({ native, os = 'android' } = {}) {
   return gate;
 }
 
-/**
- * Push every state change down to the native layer.
- *
- * `setGateState` is the entire native surface area. Everything else — what
- * counts as a valid post, how long the window is, whether a repeat is allowed —
- * stays in core/, shared byte-for-byte with the Chrome extension.
- *
- * @param {object} gate    from createGate
- * @param {{ setGateState(state: object): void }} native
- * @param {'android'|'ios'} os
- */
-export function attachNativeMirror(gate, native, os = 'android') {
-  const push = (snap) => {
-    native.setGateState({
-      status: snap.status,                           // 'locked' | 'pending' | 'unlocked'
-      unlockedUntil: snap.endsAt || 0,               // epoch ms; 0 when locked
-      blockedApps: blockedAppIds(snap.settings, os), // package names / bundle ids
-    });
-  };
-  gate.subscribe(push);
-  return gate.load().then((snap) => { push(snap); return snap; });
-}
 
-export { blockedAppIds };
+export { attachNativeMirror, blockedAppIds };

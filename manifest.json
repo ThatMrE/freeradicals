@@ -2,8 +2,7 @@
   "manifest_version": 3,
   "name": "Free Radicals — post before you scroll",
   "version": "0.1.0",
-  "description": "Social feeds stay blocked until you publish something. Posting buys you a five-minute window; when it runs out, you post again.",
-  "minimum_chrome_version": "111",
+  "description": "Social feeds stay blocked until you publish something. Posting buys you a timed window; when it runs out, you post again.",
   "permissions": [
     "storage",
     "alarms",
@@ -200,5 +199,6 @@
     "32": "extension/icons/icon-32.png",
     "48": "extension/icons/icon-48.png",
     "128": "extension/icons/icon-128.png"
-  }
+  },
+  "minimum_chrome_version": "111"
 }

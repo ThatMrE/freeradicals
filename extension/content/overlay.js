@@ -346,7 +346,9 @@ export function createOverlay(handlers) {
 
     if (settings.showQuotes) {
       const q = pickQuote(snap.now);
-      els.quote.innerHTML = `“${q.text}” <span>— ${q.by}</span>`;
+      const attribution = document.createElement('span');
+      attribution.textContent = `— ${q.by}`;
+      els.quote.replaceChildren(document.createTextNode(`“${q.text}” `), attribution);
       els.quote.hidden = false;
     } else {
       els.quote.hidden = true;

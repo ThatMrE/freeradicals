@@ -1,74 +1,28 @@
 #!/usr/bin/env node
 /**
- * Generates manifest.json and the two generated content-script tables from
- * core/platforms.js, so adding a network is a one-file change.
+ * Writes the development manifest (the repo root doubles as the unpacked
+ * extension) and the two generated content-script tables.
+ *
+ * The manifest itself is defined once, in tools/targets.mjs, and shared with
+ * the store builder — so the tree you load unpacked and the tree that ships
+ * cannot drift apart.
  *
  *   node tools/build-manifest.mjs
  */
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import { PLATFORMS } from '../core/platforms.js';
+import { buildManifest, hostMatches } from './targets.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const VERSION = '0.1.0';
+const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 
-const hosts = [...new Set(PLATFORMS.flatMap((p) => p.web.hosts))].sort();
-const matches = hosts.flatMap((h) => [`*://${h}/*`, `*://*.${h}/*`]);
-
-const manifest = {
-  manifest_version: 3,
-  name: 'Free Radicals — post before you scroll',
-  version: VERSION,
-  description:
-    'Social feeds stay blocked until you publish something. Posting buys you a five-minute window; when it runs out, you post again.',
-  minimum_chrome_version: '111',
-  permissions: ['storage', 'alarms', 'scripting', 'tabs'],
-  host_permissions: matches,
-  optional_host_permissions: ['*://*/*'],
-  background: {
-    service_worker: 'extension/background/service-worker.js',
-    type: 'module',
-  },
-  content_scripts: [
-    {
-      matches,
-      js: ['extension/content/routes.generated.js', 'extension/content/boot.js'],
-      run_at: 'document_start',
-      all_frames: false,
-    },
-    {
-      matches,
-      js: ['extension/content/signals.generated.js', 'extension/content/probe.js'],
-      run_at: 'document_start',
-      world: 'MAIN',
-      all_frames: false,
-    },
-  ],
-  web_accessible_resources: [
-    { resources: ['core/*', 'extension/shared/*', 'extension/content/*'], matches },
-  ],
-  action: {
-    default_popup: 'extension/ui/popup.html',
-    default_title: 'Free Radicals',
-    default_icon: {
-      16: 'extension/icons/icon-16.png',
-      32: 'extension/icons/icon-32.png',
-      48: 'extension/icons/icon-48.png',
-      128: 'extension/icons/icon-128.png',
-    },
-  },
-  options_ui: { page: 'extension/ui/options.html', open_in_tab: true },
-  icons: {
-    16: 'extension/icons/icon-16.png',
-    32: 'extension/icons/icon-32.png',
-    48: 'extension/icons/icon-48.png',
-    128: 'extension/icons/icon-128.png',
-  },
-};
-
-writeFileSync(join(root, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+writeFileSync(
+  join(root, 'manifest.json'),
+  `${JSON.stringify(buildManifest({ target: 'chrome', version }), null, 2)}\n`,
+);
 
 /* --- routes.generated.js: lets boot.js pre-hide before core loads ---------- */
 const routeTable = PLATFORMS.map((p) => ({
@@ -104,4 +58,7 @@ globalThis.__FR_SIGNALS__ = ${JSON.stringify(signalTable, null, 2)};
 `,
 );
 
-console.log(`manifest.json + generated tables written for ${PLATFORMS.length} platforms (${matches.length} match patterns)`);
+console.log(
+  `manifest.json + generated tables written for ${PLATFORMS.length} platforms `
+  + `(${hostMatches().length} match patterns)`,
+);

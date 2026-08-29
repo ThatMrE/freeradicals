@@ -1,0 +1,180 @@
+name: Release
+
+# Tag a release (`git tag v0.2.0 && git push --tags`) to ship, or run manually
+# with dry_run to walk the whole pipeline without touching a store.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Walk the pipeline without submitting to any store'
+        type: boolean
+        default: true
+      stores:
+        description: 'Which stores to submit to'
+        type: choice
+        default: all
+        options: [all, chrome, edge, firefox, none]
+
+permissions:
+  contents: write   # to create the GitHub release
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false   # never interrupt a submission mid-flight
+
+jobs:
+  # Nothing is uploaded anywhere until the same preflight CI runs has passed
+  # against the exact artifacts that will be submitted.
+  preflight:
+    name: Preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      has_chrome: ${{ steps.secrets.outputs.has_chrome }}
+      has_edge: ${{ steps.secrets.outputs.has_edge }}
+      has_firefox: ${{ steps.secrets.outputs.has_firefox }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # A tag that disagrees with package.json means the artifacts would be
+      # named one thing and announced as another.
+      - name: Tag matches package.json
+        id: version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.ref_type }}" = "tag" ] && [ "${{ github.ref_name }}" != "v$version" ]; then
+            echo "::error::tag ${{ github.ref_name }} does not match package.json version $version"
+            exit 1
+          fi
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-release
+      - run: npx playwright install --with-deps chromium
+      - name: Install Edge
+        id: edge
+        continue-on-error: true
+        run: npx playwright install --with-deps msedge
+
+      - name: Preflight
+        env:
+          FR_HAVE_EDGE: ${{ steps.edge.outcome == 'success' && '1' || '0' }}
+        run: node tools/preflight.mjs
+
+      # `secrets` is not available in a job-level `if`, so presence is resolved
+      # here into plain outputs the publish jobs can gate on. A store with no
+      # credentials is skipped, not failed: shipping to Chrome should not be
+      # blocked by not having set up Edge yet.
+      - name: Which stores are configured
+        id: secrets
+        env:
+          CWS: ${{ secrets.CWS_REFRESH_TOKEN }}
+          EDGE: ${{ secrets.EDGE_API_KEY }}
+          AMO: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          { echo "has_chrome=$([ -n "$CWS" ] && echo true || echo false)";
+            echo "has_edge=$([ -n "$EDGE" ] && echo true || echo false)";
+            echo "has_firefox=$([ -n "$AMO" ] && echo true || echo false)"; } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: |
+            dist/*.zip
+            dist/checksums.txt
+
+  chrome:
+    name: Chrome Web Store
+    needs: preflight
+    if: needs.preflight.outputs.has_chrome == 'true' && (github.event_name == 'push' || inputs.stores == 'all' || inputs.stores == 'chrome')
+    runs-on: ubuntu-latest
+    environment: chrome-web-store   # add reviewers here to gate a live submission
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with: { name: packages, path: dist }
+      - name: Submit
+        env:
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          CWS_ITEM_ID: ${{ secrets.CWS_ITEM_ID }}
+          CWS_DEPLOY_PERCENTAGE: ${{ vars.CWS_DEPLOY_PERCENTAGE }}
+          FR_DRY_RUN: ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '1' || '0' }}
+        run: node tools/deploy/chrome.mjs
+
+  edge:
+    name: Edge Add-ons
+    needs: preflight
+    if: needs.preflight.outputs.has_edge == 'true' && (github.event_name == 'push' || inputs.stores == 'all' || inputs.stores == 'edge')
+    runs-on: ubuntu-latest
+    environment: edge-add-ons
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with: { name: packages, path: dist }
+      - name: Submit
+        env:
+          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+          EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          FR_DRY_RUN: ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '1' || '0' }}
+        run: node tools/deploy/edge.mjs
+
+  firefox:
+    name: addons.mozilla.org
+    needs: preflight
+    if: needs.preflight.outputs.has_firefox == 'true' && (github.event_name == 'push' || inputs.stores == 'all' || inputs.stores == 'firefox')
+    runs-on: ubuntu-latest
+    environment: amo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with: { name: packages, path: dist }
+      - name: Submit
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+          AMO_ADDON_ID: ${{ secrets.AMO_ADDON_ID }}
+          FR_DRY_RUN: ${{ (github.event_name == 'workflow_dispatch' && inputs.dry_run) && '1' || '0' }}
+        run: node tools/deploy/firefox.mjs
+
+  github_release:
+    name: GitHub release
+    needs: [preflight, chrome, edge, firefox]
+    # Runs even when a store was skipped for want of credentials, but not when
+    # one actually failed.
+    if: always() && github.event_name == 'push' && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: packages, path: dist }
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "Free Radicals ${{ needs.preflight.outputs.version }}" \
+            --notes "Store packages for Chrome, Edge, Firefox and Safari. Checksums in checksums.txt; the packages are byte-reproducible from this tag." \
+            dist/*.zip dist/checksums.txt

@@ -112,19 +112,40 @@ gets one number and needs no running JavaScript. Full guide:
 ## Development
 
 ```bash
-npm ci                # only devDependency is Playwright; the extension itself
-                      #   ships no dependencies and needs no build
-npm test              # 34 unit tests: the state machine, earned windows,
-                      #   anti-cheat, portability
+npm ci                # dev dependencies only; the extension itself ships none
+npm test              # 119 unit tests
 npm run test:e2e      # loads the extension into real Chromium and drives it
-npm run build         # regenerate manifest.json, route/signal tables, icons
+npm run build         # manifests, icons, and a package per browser
+npm run preflight     # everything, in the order CI runs it
 ```
 
-Both suites run on every push and pull request
-([`.github/workflows/ci.yml`](.github/workflows/ci.yml)), along with a check
-that the generated files still match `core/platforms.js` — so a network added
-to the registry without a rebuild fails CI instead of shipping a manifest that
-never matches its hosts.
+`npm run preflight` is the gate before anything ships. It regenerates and
+diffs the files derived from `core/platforms.js`, runs the unit tests, builds
+every store package, drives the **built package** through a real browser, runs
+AMO's linter over the Firefox build, and dry-runs each store deployer. A check
+it could not run — Edge on a machine without Edge — is reported as skipped, and
+it says plainly that a skip is not a pass.
+
+## Shipping
+
+Four browser targets are built from one source tree; the Firefox manifest
+genuinely differs (event page instead of a service worker, an add-on id, a
+data-collection declaration, a version floor). Packages are byte-reproducible,
+so the artifact in a release can be checked against the one that passed CI.
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+That runs the full preflight against the exact artifacts, then submits to every
+store it has credentials for — Chrome (v2 API), Edge, and AMO. Stores without
+credentials are skipped rather than failing the release. Safari gets a
+converter-ready tree; iOS and Android have a complete Fastlane pipeline and a
+readiness gate that currently, and loudly, reports the missing piece: there is
+no React Native app in this repository yet.
+
+The full method, per store — endpoints, credentials, review gotchas, and the
+2026 SDK deadlines — is in [docs/RELEASING.md](docs/RELEASING.md).
 
 The e2e test is the one that matters: it stubs `x.com`, confirms the feed is
 blocked on arrival, posts through the popup, watches the feed open, expires the

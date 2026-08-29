@@ -26,18 +26,27 @@ async function save(patch) {
 }
 
 function renderPlatforms(settings) {
-  $('platforms').innerHTML = PLATFORMS.map((p) => `
-    <label class="check">
-      <input type="checkbox" data-platform="${p.id}" ${settings.platformOverrides[p.id] === false ? '' : 'checked'} />
-      <span class="t">${p.name}</span>
-    </label>`).join('');
+  // Built as nodes rather than markup: no HTML parsing, nothing to escape.
+  $('platforms').replaceChildren(...PLATFORMS.map((p) => {
+    const label = document.createElement('label');
+    label.className = 'check';
 
-  for (const input of $('platforms').querySelectorAll('input')) {
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.dataset.platform = p.id;
+    input.checked = settings.platformOverrides[p.id] !== false;
     input.addEventListener('change', () => {
       const current = gate.snapshot().settings.platformOverrides || {};
-      save({ platformOverrides: { ...current, [input.dataset.platform]: input.checked } });
+      save({ platformOverrides: { ...current, [p.id]: input.checked } });
     });
-  }
+
+    const name = document.createElement('span');
+    name.className = 't';
+    name.textContent = p.name;
+
+    label.append(input, name);
+    return label;
+  }));
 }
 
 function render() {

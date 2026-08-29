@@ -1,0 +1,11 @@
+{
+  "//": "Warnings from AMO's own linter that are accepted, each with a reason. Anything not listed here fails the build. Reviewed when the linter or the code changes — not a mute switch.",
+  "accepted": [
+    {
+      "code": "UNSAFE_VAR_ASSIGNMENT",
+      "file": "extension/content/overlay.js",
+      "reason": "The block screen's markup is assigned once from a module-level constant with no interpolation of any kind — no user text, no page text, no settings. There is nothing to inject.",
+      "why_not_fixed": "Rebuilding ~50 lines of readable layout as createElement calls would make the UI materially harder to change while removing no actual risk. Every innerHTML assignment that did interpolate data was rewritten to build DOM nodes instead; this is the only one left, and it is a constant."
+    }
+  ]
+}

@@ -9,21 +9,37 @@
  *   node tests/extension.e2e.mjs
  */
 import { chromium } from 'playwright';
+
+import { PLATFORMS } from '../core/index.js';
 import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+/**
+ * By default this drives the repo itself, which is the unpacked extension. CI
+ * also runs it against `dist/chrome`, so the thing that gets uploaded to the
+ * store is the thing that was tested — not a tree that merely resembles it.
+ */
+const ROOT = process.env.FR_EXTENSION_ROOT
+  ? resolve(process.env.FR_EXTENSION_ROOT)
+  : join(dirname(fileURLToPath(import.meta.url)), '..');
 const STUB = `<!doctype html><html><head><title>Feed</title></head>
   <body><div id="feed">real feed content</div></body></html>`;
 
 const results = [];
 const check = (name, fn) => { try { fn(); results.push(['ok', name]); } catch (e) { results.push(['FAIL', `${name} — ${e.message}`]); } };
 
+/**
+ * Which Chromium to drive. Edge is the same engine and the same MV3, but it is
+ * a separate store submission, so CI runs this suite against both rather than
+ * assuming they agree.
+ */
+const CHANNEL = process.env.FR_BROWSER_CHANNEL || 'chromium';
+
 const context = await chromium.launchPersistentContext(mkdtempSync(join(tmpdir(), 'fr-')), {
-  channel: 'chromium',
+  channel: CHANNEL,
   headless: true,
   args: [`--disable-extensions-except=${ROOT}`, `--load-extension=${ROOT}`],
 });
@@ -33,6 +49,8 @@ try {
   if (!worker) worker = await context.waitForEvent('serviceworker', { timeout: 15000 });
   const extensionId = new URL(worker.url()).host;
   console.log(`extension id: ${extensionId}`);
+  console.log(`extension root: ${ROOT}`);
+  console.log(`browser channel: ${CHANNEL}`);
 
   await context.route('**/*', (route) => {
     const url = route.request().url();
@@ -63,6 +81,22 @@ try {
   check('block screen is mounted', () => assert.equal(overlayMounted, true));
   const feedHidden = !(await bodyVisible(feed));
   check('page content is hidden behind the block screen', () => assert.equal(feedHidden, true));
+
+  /* 1b. Every selector in the registry is valid CSS. --------------------- */
+  // An invalid selector does not fail loudly: the injected stylesheet is
+  // dropped and the feed modules it was meant to hide simply stay visible. The
+  // browser's own parser is the only authority worth asking.
+  const selectors = PLATFORMS.flatMap((p) =>
+    p.web.feedElements.map((sel) => ({ platform: p.id, sel }))
+      .concat(p.web.inlineComposer ? [{ platform: p.id, sel: p.web.inlineComposer }] : []));
+
+  const badSelectors = await feed.evaluate((list) =>
+    list.filter(({ sel }) => {
+      try { document.querySelector(sel); return false; } catch { return true; }
+    }), selectors);
+
+  check(`all ${selectors.length} platform selectors are valid CSS`, () =>
+    assert.deepEqual(badSelectors, [], `invalid: ${JSON.stringify(badSelectors)}`));
 
   /* 2. A non-feed route on the same site stays usable. ------------------- */
   const settings = await context.newPage();

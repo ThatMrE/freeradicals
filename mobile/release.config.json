@@ -1,0 +1,26 @@
+{
+  "//": "Store requirements the mobile release must meet. Checked by tools/deploy/mobile.mjs so a deadline is a failing check rather than a rejection email.",
+  "android": {
+    "applicationId": "app.freeradicals",
+    "targetSdk": 36,
+    "minSdk": 26,
+    "targetSdkDeadline": "2026-08-31",
+    "targetSdkNote": "From 31 Aug 2026 new apps and updates must target Android 16 (API 36). Existing listings need API 35 to stay available to new users. An extension to 1 Nov 2026 can be requested in Play Console.",
+    "format": "aab",
+    "track": "internal",
+    "permissions": ["android.permission.PACKAGE_USAGE_STATS", "android.permission.SYSTEM_ALERT_WINDOW", "android.permission.FOREGROUND_SERVICE"]
+  },
+  "ios": {
+    "bundleId": "app.freeradicals",
+    "sdk": "26",
+    "xcode": "26",
+    "sdkDeadline": "2026-04-28",
+    "sdkNote": "Since 28 Apr 2026 App Store Connect requires builds made with the iOS 26 SDK, which means Xcode 26. The deployment target can still be lower to support older devices.",
+    "entitlements": ["com.apple.developer.family-controls"],
+    "entitlementNote": "Family Controls is request-only. Apple must grant it before a Screen Time shield can ship; budget review time, it is not a checkbox."
+  },
+  "scaffold": {
+    "appDir": "mobile/app",
+    "note": "The React Native app is not in this repository yet. mobile/bridge is the shared JavaScript it will import; mobile/android and mobile/ios are reference implementations of the native halves."
+  }
+}

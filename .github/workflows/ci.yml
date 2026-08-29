@@ -5,7 +5,6 @@ on:
     branches: [master]
   pull_request:
 
-# Nothing here writes to the repository or talks to the API.
 permissions:
   contents: read
 
@@ -20,14 +19,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
-      # Only devDependencies (Playwright) are installed; the extension itself
-      # ships no dependencies and needs no build.
       - run: npm ci
 
       - name: Unit tests
@@ -45,13 +41,12 @@ jobs:
             extension/content/routes.generated.js \
             extension/content/signals.generated.js
 
-  e2e:
-    name: End-to-end (real Chromium)
+  preflight:
+    name: Preflight (packages, browsers, stores)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -61,8 +56,7 @@ jobs:
 
       - name: Resolve Playwright version
         id: pw
-        run: |
-          echo "version=$(node -p "require('./package-lock.json').packages['node_modules/playwright'].version")" >> "$GITHUB_OUTPUT"
+        run: echo "version=$(node -p "require('./package-lock.json').packages['node_modules/playwright'].version")" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache@v4
         with:
@@ -70,10 +64,29 @@ jobs:
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
 
       # The suite loads the unpacked extension, which needs the full Chromium
-      # build rather than the headless shell — hence `channel: 'chromium'` in
-      # the test and a plain `install chromium` here.
+      # build rather than the headless shell.
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: End-to-end tests
-        run: npm run test:e2e
+      # Edge is the same engine but a separate store submission, so it is
+      # driven separately. If the runner cannot provide it, the preflight
+      # reports a skip — which it prints as "NOT a pass" — rather than
+      # failing the build or, worse, quietly claiming Edge was tested.
+      - name: Install Edge
+        id: edge
+        continue-on-error: true
+        run: npx playwright install --with-deps msedge
+
+      - name: Preflight
+        env:
+          FR_HAVE_EDGE: ${{ steps.edge.outcome == 'success' && '1' || '0' }}
+        run: node tools/preflight.mjs
+
+      - name: Upload store packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ github.sha }}
+          path: |
+            dist/*.zip
+            dist/checksums.txt
+          retention-days: 14

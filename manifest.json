@@ -1,0 +1,204 @@
+{
+  "manifest_version": 3,
+  "name": "Free Radicals — post before you scroll",
+  "version": "0.1.0",
+  "description": "Social feeds stay blocked until you publish something. Posting buys you a five-minute window; when it runs out, you post again.",
+  "minimum_chrome_version": "111",
+  "permissions": [
+    "storage",
+    "alarms",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://bsky.app/*",
+    "*://*.bsky.app/*",
+    "*://facebook.com/*",
+    "*://*.facebook.com/*",
+    "*://fb.com/*",
+    "*://*.fb.com/*",
+    "*://fosstodon.org/*",
+    "*://*.fosstodon.org/*",
+    "*://hachyderm.io/*",
+    "*://*.hachyderm.io/*",
+    "*://instagram.com/*",
+    "*://*.instagram.com/*",
+    "*://linkedin.com/*",
+    "*://*.linkedin.com/*",
+    "*://mastodon.online/*",
+    "*://*.mastodon.online/*",
+    "*://mastodon.social/*",
+    "*://*.mastodon.social/*",
+    "*://reddit.com/*",
+    "*://*.reddit.com/*",
+    "*://threads.com/*",
+    "*://*.threads.com/*",
+    "*://threads.net/*",
+    "*://*.threads.net/*",
+    "*://tiktok.com/*",
+    "*://*.tiktok.com/*",
+    "*://twitter.com/*",
+    "*://*.twitter.com/*",
+    "*://x.com/*",
+    "*://*.x.com/*",
+    "*://youtube.com/*",
+    "*://*.youtube.com/*"
+  ],
+  "optional_host_permissions": [
+    "*://*/*"
+  ],
+  "background": {
+    "service_worker": "extension/background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://bsky.app/*",
+        "*://*.bsky.app/*",
+        "*://facebook.com/*",
+        "*://*.facebook.com/*",
+        "*://fb.com/*",
+        "*://*.fb.com/*",
+        "*://fosstodon.org/*",
+        "*://*.fosstodon.org/*",
+        "*://hachyderm.io/*",
+        "*://*.hachyderm.io/*",
+        "*://instagram.com/*",
+        "*://*.instagram.com/*",
+        "*://linkedin.com/*",
+        "*://*.linkedin.com/*",
+        "*://mastodon.online/*",
+        "*://*.mastodon.online/*",
+        "*://mastodon.social/*",
+        "*://*.mastodon.social/*",
+        "*://reddit.com/*",
+        "*://*.reddit.com/*",
+        "*://threads.com/*",
+        "*://*.threads.com/*",
+        "*://threads.net/*",
+        "*://*.threads.net/*",
+        "*://tiktok.com/*",
+        "*://*.tiktok.com/*",
+        "*://twitter.com/*",
+        "*://*.twitter.com/*",
+        "*://x.com/*",
+        "*://*.x.com/*",
+        "*://youtube.com/*",
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "extension/content/routes.generated.js",
+        "extension/content/boot.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "*://bsky.app/*",
+        "*://*.bsky.app/*",
+        "*://facebook.com/*",
+        "*://*.facebook.com/*",
+        "*://fb.com/*",
+        "*://*.fb.com/*",
+        "*://fosstodon.org/*",
+        "*://*.fosstodon.org/*",
+        "*://hachyderm.io/*",
+        "*://*.hachyderm.io/*",
+        "*://instagram.com/*",
+        "*://*.instagram.com/*",
+        "*://linkedin.com/*",
+        "*://*.linkedin.com/*",
+        "*://mastodon.online/*",
+        "*://*.mastodon.online/*",
+        "*://mastodon.social/*",
+        "*://*.mastodon.social/*",
+        "*://reddit.com/*",
+        "*://*.reddit.com/*",
+        "*://threads.com/*",
+        "*://*.threads.com/*",
+        "*://threads.net/*",
+        "*://*.threads.net/*",
+        "*://tiktok.com/*",
+        "*://*.tiktok.com/*",
+        "*://twitter.com/*",
+        "*://*.twitter.com/*",
+        "*://x.com/*",
+        "*://*.x.com/*",
+        "*://youtube.com/*",
+        "*://*.youtube.com/*"
+      ],
+      "js": [
+        "extension/content/signals.generated.js",
+        "extension/content/probe.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "core/*",
+        "extension/shared/*",
+        "extension/content/*"
+      ],
+      "matches": [
+        "*://bsky.app/*",
+        "*://*.bsky.app/*",
+        "*://facebook.com/*",
+        "*://*.facebook.com/*",
+        "*://fb.com/*",
+        "*://*.fb.com/*",
+        "*://fosstodon.org/*",
+        "*://*.fosstodon.org/*",
+        "*://hachyderm.io/*",
+        "*://*.hachyderm.io/*",
+        "*://instagram.com/*",
+        "*://*.instagram.com/*",
+        "*://linkedin.com/*",
+        "*://*.linkedin.com/*",
+        "*://mastodon.online/*",
+        "*://*.mastodon.online/*",
+        "*://mastodon.social/*",
+        "*://*.mastodon.social/*",
+        "*://reddit.com/*",
+        "*://*.reddit.com/*",
+        "*://threads.com/*",
+        "*://*.threads.com/*",
+        "*://threads.net/*",
+        "*://*.threads.net/*",
+        "*://tiktok.com/*",
+        "*://*.tiktok.com/*",
+        "*://twitter.com/*",
+        "*://*.twitter.com/*",
+        "*://x.com/*",
+        "*://*.x.com/*",
+        "*://youtube.com/*",
+        "*://*.youtube.com/*"
+      ]
+    }
+  ],
+  "action": {
+    "default_popup": "extension/ui/popup.html",
+    "default_title": "Free Radicals",
+    "default_icon": {
+      "16": "extension/icons/icon-16.png",
+      "32": "extension/icons/icon-32.png",
+      "48": "extension/icons/icon-48.png",
+      "128": "extension/icons/icon-128.png"
+    }
+  },
+  "options_ui": {
+    "page": "extension/ui/options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "extension/icons/icon-16.png",
+    "32": "extension/icons/icon-32.png",
+    "48": "extension/icons/icon-48.png",
+    "128": "extension/icons/icon-128.png"
+  }
+}

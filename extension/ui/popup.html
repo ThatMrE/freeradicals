@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Free Radicals</title>
+  <link rel="stylesheet" href="ui.css" />
+  <style>
+    body { width: 360px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+    .recent { max-height: 190px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <div class="spread">
+    <h1>Free Radicals</h1>
+    <button class="ghost" id="settings" type="button">Settings</button>
+  </div>
+
+  <div class="status">
+    <span class="dot" id="dot"></span>
+    <span id="statusText">Loading…</span>
+    <span class="clock" id="clock"></span>
+  </div>
+
+  <section id="composeSection">
+    <textarea id="input" placeholder="Write something. Posting opens every feed for a few minutes."></textarea>
+    <div class="spread" style="margin:8px 0 10px">
+      <span class="count" id="count">0 / 25</span>
+      <span class="error" id="error"></span>
+    </div>
+    <button class="primary" id="post" style="width:100%" disabled>Post &amp; open feeds</button>
+  </section>
+
+  <section id="openSection" hidden>
+    <div class="row">
+      <button class="ghost" id="lock" style="flex:1">Lock feeds now</button>
+    </div>
+  </section>
+
+  <section id="pendingSection" hidden>
+    <p class="small muted" id="pendingText">Waiting for your post to go live…</p>
+    <div class="row" style="margin-top:10px">
+      <button class="ghost" id="override" style="flex:1" hidden>I posted it anyway</button>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat"><b id="sToday">0</b><span>today</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>day streak</span></div>
+    <div class="stat"><b id="sWeek">0</b><span>this week</span></div>
+    <div class="stat"><b id="sWords">0</b><span>words</span></div>
+  </div>
+
+  <section>
+    <h2>Recently written</h2>
+    <div class="recent" id="recent"><p class="small muted">Nothing yet.</p></div>
+  </section>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

@@ -1,11 +1,14 @@
-import { PLATFORMS, createGate } from '../../core/index.js';
+import { PLATFORMS, createGate, earnedMinutes } from '../../core/index.js';
 import { createChromeStorage } from '../shared/chrome-storage.js';
 import { MSG, send } from '../shared/messages.js';
 
 const $ = (id) => document.getElementById(id);
 const gate = createGate({ storage: createChromeStorage('local') });
 
-const NUMBERS = ['unlockMinutes', 'minChars', 'warnAtSeconds', 'proofOverrideAfterSeconds', 'duplicateLookback'];
+const NUMBERS = [
+  'unlockMinutes', 'minChars', 'warnAtSeconds', 'proofOverrideAfterSeconds',
+  'duplicateLookback', 'earnPerChars', 'earnMinutesPerStep', 'maxUnlockMinutes',
+];
 const FLAGS = ['requirePublishProof', 'publishAssist', 'blockDuplicatePosts', 'showQuotes'];
 
 if (location.hash === '#welcome') $('welcome').hidden = false;
@@ -45,6 +48,16 @@ function render() {
   $('proofOverrideAfterSeconds').disabled = !s.requirePublishProof;
   $('duplicateLookback').disabled = !s.blockDuplicatePosts;
 
+  const earned = s.durationMode === 'earned';
+  if (document.activeElement !== $('durationMode')) $('durationMode').value = s.durationMode;
+  for (const row of document.querySelectorAll('.earned-only')) row.hidden = !earned;
+  if (earned) {
+    const sample = s.minChars + s.earnPerChars * 3;
+    $('earnExample').textContent =
+      `${s.minChars} characters buys ${s.unlockMinutes} min · `
+      + `${sample} characters buys ${earnedMinutes('x'.repeat(sample), s)} min`;
+  }
+
   const { total, words, streak } = snap.stats;
   $('journalSummary').textContent = total
     ? `${total} post${total === 1 ? '' : 's'}, ${words.toLocaleString()} words, ${streak}-day streak.`
@@ -57,6 +70,7 @@ for (const key of NUMBERS) {
 for (const key of FLAGS) {
   $(key).addEventListener('change', () => save({ [key]: $(key).checked }));
 }
+$('durationMode').addEventListener('change', () => save({ durationMode: $('durationMode').value }));
 
 $('export').addEventListener('click', () => {
   const snap = gate.snapshot();

@@ -38,12 +38,34 @@
   <section>
     <h2>The deal</h2>
     <div class="field">
-      <div><div class="t">Window length</div><div class="d">How long a feed stays open after you post.</div></div>
+      <div><div class="t">Window length</div><div class="d">Fixed gives every post the same window. Earned starts at the base and grows with how much you write, so a longer post buys a longer look.</div></div>
+      <select id="durationMode" style="width:auto">
+        <option value="earned">Earned by length</option>
+        <option value="fixed">Fixed</option>
+      </select>
+    </div>
+    <div class="field">
+      <div><div class="t">Base window</div><div class="d">What a post that just clears the minimum buys.</div></div>
       <div class="row"><input type="number" id="unlockMinutes" min="1" max="120" /><span class="muted small">min</span></div>
     </div>
     <div class="field">
       <div><div class="t">Minimum length</div><div class="d">Characters required before the Post button turns on.</div></div>
       <div class="row"><input type="number" id="minChars" min="1" max="2000" /><span class="muted small">chars</span></div>
+    </div>
+    <div class="field earned-only">
+      <div><div class="t">Earn a step every</div><div class="d">Characters beyond the minimum that buy one more step of feed.</div></div>
+      <div class="row"><input type="number" id="earnPerChars" min="5" max="2000" /><span class="muted small">chars</span></div>
+    </div>
+    <div class="field earned-only">
+      <div><div class="t">Each step is worth</div><div class="d">Minutes added per step earned.</div></div>
+      <div class="row"><input type="number" id="earnMinutesPerStep" min="1" max="60" /><span class="muted small">min</span></div>
+    </div>
+    <div class="field earned-only">
+      <div><div class="t">Never longer than</div><div class="d">The ceiling, however much you write.</div></div>
+      <div class="row"><input type="number" id="maxUnlockMinutes" min="1" max="240" /><span class="muted small">min</span></div>
+    </div>
+    <div class="field earned-only">
+      <div><div class="t" id="earnExample">&nbsp;</div><div class="d">A worked example with your current numbers.</div></div>
     </div>
     <div class="field">
       <div><div class="t">Warn me near the end</div><div class="d">The countdown turns red with this long to go.</div></div>

@@ -3,9 +3,9 @@ import test from 'node:test';
 
 import {
   CUSTOM_PLATFORM, DEFAULT_SETTINGS, REJECTIONS, blockPlan, composerUrlFor,
-  createGate, createManualClock, createMemoryStorage, evaluate, formatBadge,
-  formatCountdown, isDuplicate, matchPlatform, matchesPublishSignal,
-  normalizeSettings, looksLikeFiller, stats,
+  createGate, createManualClock, createMemoryStorage, earnProgress, earnedMinutes,
+  evaluate, formatBadge, formatCountdown, isDuplicate, matchPlatform,
+  matchesPublishSignal, normalizeSettings, looksLikeFiller, stats,
 } from '../core/index.js';
 
 const MIN = 60_000;
@@ -21,6 +21,20 @@ function harness(settings = {}) {
 
 const GOOD_POST = 'Shipping the gate today: produce before you consume, five minutes at a time.';
 
+/**
+ * Real-looking prose of an exact length. Repeating one character would be
+ * rejected as filler before the length ever mattered, so the words are made
+ * distinct — these tests are about how long a post buys, not about what counts
+ * as writing.
+ */
+function prose(chars) {
+  const words = ['wrote', 'shipped', 'read', 'fixed', 'built', 'noticed', 'traced', 'kept'];
+  let out = '';
+  for (let i = 0; out.length < chars + 8; i += 1) out += `${words[i % words.length]}${i} `;
+  // A trailing space would be trimmed away and leave the length one short.
+  return out.slice(0, chars).replace(/\s$/, 'z');
+}
+
 test('a fresh gate is locked', async () => {
   const { gate } = harness();
   await gate.load();
@@ -29,7 +43,7 @@ test('a fresh gate is locked', async () => {
 });
 
 test('a valid post unlocks the feed for exactly the configured window', async () => {
-  const { gate, clock } = harness({ unlockMinutes: 5 });
+  const { gate, clock } = harness({ durationMode: 'fixed', unlockMinutes: 5 });
   await gate.load();
 
   const res = await gate.submitPost({ text: GOOD_POST, platformId: 'x' });
@@ -89,7 +103,7 @@ test('short posts and filler are refused', async () => {
 });
 
 test('you cannot bank time by posting while the feed is already open', async () => {
-  const { gate, clock } = harness();
+  const { gate, clock } = harness({ durationMode: 'fixed' });
   await gate.load();
   await gate.submitPost({ text: GOOD_POST });
   clock.advance(MIN);
@@ -101,7 +115,9 @@ test('you cannot bank time by posting while the feed is already open', async () 
 });
 
 test('proof mode holds the clock until a publish is observed', async () => {
-  const { gate, clock } = harness({ requirePublishProof: true, proofOverrideAfterSeconds: 90 });
+  const { gate, clock } = harness({
+    durationMode: 'fixed', requirePublishProof: true, proofOverrideAfterSeconds: 90,
+  });
   await gate.load();
 
   await gate.submitPost({ text: GOOD_POST, platformId: 'x' });
@@ -149,7 +165,7 @@ test('lockNow ends the session early', async () => {
 });
 
 test('state survives a restart because it lives in storage', async () => {
-  const { gate, storage, clock } = harness();
+  const { gate, storage, clock } = harness({ durationMode: 'fixed' });
   await gate.load();
   await gate.submitPost({ text: GOOD_POST });
 
@@ -183,7 +199,7 @@ test('settings are clamped to sane ranges', () => {
 });
 
 test('settings changes apply to the next window, not the current one', async () => {
-  const { gate, clock } = harness({ unlockMinutes: 5 });
+  const { gate, clock } = harness({ durationMode: 'fixed', unlockMinutes: 5 });
   await gate.load();
   await gate.submitPost({ text: GOOD_POST });
   await gate.updateSettings({ unlockMinutes: 30 });
@@ -192,6 +208,90 @@ test('settings changes apply to the next window, not the current one', async () 
   await gate.submitPost({ text: 'A second, entirely different thought for the next window.' });
   assert.equal(gate.snapshot().remainingMs, 30 * MIN);
 });
+
+/* ---------------------------------------------------------------------- */
+/* Earned windows: the longer the post, the longer the feed stays open.     */
+
+test('a longer post buys a longer window', () => {
+  const s = { ...DEFAULT_SETTINGS, minChars: 25, unlockMinutes: 5, earnPerChars: 50, maxUnlockMinutes: 20 };
+  const text = (n) => 'x'.repeat(n);
+
+  assert.equal(earnedMinutes(text(25), s), 5, 'clearing the minimum buys the base window');
+  assert.equal(earnedMinutes(text(74), s), 5, 'one character short of the next step earns nothing extra');
+  assert.equal(earnedMinutes(text(75), s), 6, 'the step lands exactly on the boundary');
+  assert.equal(earnedMinutes(text(125), s), 7);
+  assert.equal(earnedMinutes(text(10), s), 5, 'below the minimum still quotes the base, never less');
+});
+
+test('an earned window is capped', () => {
+  const s = { ...DEFAULT_SETTINGS, minChars: 25, unlockMinutes: 5, earnPerChars: 50, maxUnlockMinutes: 20 };
+  assert.equal(earnedMinutes('x'.repeat(100_000), s), 20, 'no amount of writing exceeds the ceiling');
+
+  const upside = { ...s, unlockMinutes: 30, maxUnlockMinutes: 10 };
+  assert.equal(earnedMinutes('x'.repeat(5000), upside), 30, 'a ceiling below the base cannot shorten it');
+});
+
+test('fixed mode ignores length entirely', () => {
+  const s = { ...DEFAULT_SETTINGS, durationMode: 'fixed', unlockMinutes: 5 };
+  assert.equal(earnedMinutes('x'.repeat(25), s), 5);
+  assert.equal(earnedMinutes('x'.repeat(5000), s), 5);
+});
+
+test('earn progress tells the compose box what the next character buys', () => {
+  const s = { ...DEFAULT_SETTINGS, minChars: 25, unlockMinutes: 5, earnPerChars: 50, maxUnlockMinutes: 20 };
+
+  const short = earnProgress('x'.repeat(10), s);
+  assert.equal(short.charsToNext, 15, 'below the minimum it counts down to being postable');
+
+  const atBase = earnProgress('x'.repeat(25), s);
+  assert.equal(atBase.minutes, 5);
+  assert.equal(atBase.charsToNext, 50);
+  assert.equal(atBase.nextMinutes, 6);
+
+  const mid = earnProgress('x'.repeat(74), s);
+  assert.equal(mid.charsToNext, 1, 'one more character banks the minute');
+
+  const capped = earnProgress('x'.repeat(5000), s);
+  assert.equal(capped.atCap, true);
+  assert.equal(capped.charsToNext, 0);
+  assert.equal(capped.nextMinutes, capped.minutes, 'nothing further to promise at the cap');
+
+  assert.equal(earnProgress('x'.repeat(500), { ...s, durationMode: 'fixed' }).earning, false);
+});
+
+test('the window is priced from the post, and frozen at submit', async () => {
+  const { gate, clock } = harness({ minChars: 25, unlockMinutes: 5, earnPerChars: 50 });
+  await gate.load();
+
+  // 25 base + 3 full steps of 50 = 8 minutes.
+  const post = prose(25 + 150);
+  assert.equal(post.trim().length, 175, 'the fixture must be exactly at the third step');
+  await gate.submitPost({ text: post });
+  assert.equal(gate.snapshot().remainingMs, 8 * MIN);
+
+  // Rewriting settings mid-window cannot stretch a window already running.
+  await gate.updateSettings({ earnPerChars: 5 });
+  assert.equal(gate.snapshot().remainingMs, 8 * MIN);
+
+  clock.advance(8 * MIN);
+  assert.equal(gate.snapshot().status, 'locked', 'the earned window expires like any other');
+});
+
+test('a short post still buys the base window', async () => {
+  const { gate } = harness({ minChars: 25, unlockMinutes: 5 });
+  await gate.load();
+  await gate.submitPost({ text: 'A short but perfectly real thought.' });
+  assert.equal(gate.snapshot().remainingMs, 5 * MIN);
+});
+
+test('duration mode is validated like every other setting', () => {
+  assert.equal(normalizeSettings({ durationMode: 'nonsense' }).durationMode, DEFAULT_SETTINGS.durationMode);
+  assert.equal(normalizeSettings({ durationMode: 'fixed' }).durationMode, 'fixed');
+  assert.equal(normalizeSettings({ earnPerChars: 0 }).earnPerChars, 5, 'a zero step would divide by zero');
+  assert.equal(normalizeSettings({ earnPerChars: 99999 }).earnPerChars, 2000);
+});
+
+/* ---------------------------------------------------------------------- */
 
 test('platform matching and block planning', () => {
   assert.equal(matchPlatform('https://x.com/home').id, 'x');

@@ -1,8 +1,13 @@
 # Free Radicals
 
 **Social feeds stay closed until you publish something.** Writing a post buys
-you one five-minute window. When the timer hits zero the feed closes, and the
-next window costs another post.
+you a timed window. When the timer hits zero the feed closes, and the next
+window costs another post.
+
+How long a window? That depends on how much you wrote. Clearing the minimum
+buys the base five minutes; every 50 characters beyond it buys another minute,
+up to twenty. The block screen shows the clock climbing as you type, so you can
+see the trade while you are making it.
 
 Produce before you consume.
 
@@ -14,10 +19,14 @@ mobile overlay — see [the port guide](mobile/README.md).
 ## The rule
 
 ```
-locked ──► write something real ──► post ──► 5:00 of feed ──► locked
-   ▲                                                             │
-   └─────────────────── and the next window costs another post ──┘
+locked ──► write something real ──► post ──► you earned 7:00 ──► locked
+   ▲                │                                               │
+   │                └── 25 chars → 5:00    175 chars → 8:00          │
+   └──────────────────── and the next window costs another post ─────┘
 ```
+
+Prefer a flat allowance? Switch the window length to **Fixed** in settings and
+every post buys the same five minutes.
 
 ## Install
 
@@ -58,8 +67,12 @@ Details in [docs/PRIVACY.md](docs/PRIVACY.md).
 
 | | Default |
 | --- | --- |
-| Window length | 5 minutes |
+| Window length | Earned by length (or Fixed) |
+| Base window | 5 minutes |
 | Minimum post | 25 characters |
+| Earn a step every | 50 characters |
+| Each step is worth | 1 minute |
+| Never longer than | 20 minutes |
 | Warn near the end | last 60 seconds |
 | Require proof of publishing | off |
 | Help me publish it | on |
@@ -97,14 +110,16 @@ gets one number and needs no running JavaScript. Full guide:
 ## Development
 
 ```bash
-npm test              # 27 unit tests: the state machine, anti-cheat, portability
+npm test              # 34 unit tests: the state machine, earned windows,
+                      #   anti-cheat, portability
 npm run test:e2e      # loads the extension into real Chromium and drives it
 npm run build         # regenerate manifest.json, route/signal tables, icons
 ```
 
 The e2e test is the one that matters: it stubs `x.com`, confirms the feed is
 blocked on arrival, posts through the popup, watches the feed open, expires the
-window, and confirms it slams shut and refuses the same text again.
+window, confirms it slams shut and refuses the same text again, then checks
+that a longer post earns a longer window and that fixed mode ignores length.
 
 Adding a network is one record in `core/platforms.js` and a rebuild —
 see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).

@@ -1,4 +1,4 @@
-import { createGate, formatCountdown, formatRelative, getPlatform } from '../../core/index.js';
+import { createGate, earnProgress, formatCountdown, formatRelative, getPlatform } from '../../core/index.js';
 import { createChromeStorage } from '../shared/chrome-storage.js';
 import { MSG, send } from '../shared/messages.js';
 
@@ -6,17 +6,39 @@ const $ = (id) => document.getElementById(id);
 const gate = createGate({ storage: createChromeStorage('local') });
 
 let minChars = 25;
+let settings = null;
 
 function updateCount() {
   const n = $('input').value.trim().length;
   $('count').textContent = `${n} / ${minChars}`;
   $('count').dataset.ok = n >= minChars ? '1' : '0';
   $('post').disabled = n < minChars;
+  if (!settings) return;
+
+  const earn = earnProgress($('input').value, settings);
+  $('post').textContent = `Post & open feeds for ${formatCountdown(earn.ms)}`;
+  $('earn').hidden = !earn.earning;
+  if (!earn.earning) return;
+
+  $('earnTime').textContent = formatCountdown(earn.ms);
+  $('earn').dataset.cap = earn.atCap ? '1' : '0';
+  if (earn.atCap) {
+    $('earnNext').textContent = "that's the maximum";
+    $('meterFill').parentElement.hidden = true;
+  } else {
+    $('meterFill').parentElement.hidden = false;
+    $('earnNext').textContent = n < minChars
+      ? `${earn.charsToNext} more to unlock posting`
+      : `${earn.charsToNext} more buys ${formatCountdown(earn.nextMinutes * 60_000)}`;
+    const step = settings.earnPerChars || 50;
+    $('meterFill').style.width = `${Math.round(((step - earn.charsToNext) / step) * 100)}%`;
+  }
 }
 
 function render() {
   const snap = gate.snapshot();
-  minChars = snap.settings.minChars;
+  settings = snap.settings;
+  minChars = settings.minChars;
 
   $('dot').dataset.state = snap.status;
   $('clock').dataset.warn = snap.warning ? '1' : '0';

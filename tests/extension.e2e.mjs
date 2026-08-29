@@ -145,6 +145,67 @@ try {
   check('the post was journalled', () =>
     assert.match(journal[0], /straight into the block screen/));
   check('the journal keeps every window it issued', () => assert.equal(journal.length, 2));
+
+  /* 8. The window length is earned from the length of the post. ---------- */
+  const durationOf = () => worker.evaluate(async () =>
+    (await chrome.storage.local.get('session')).session.durationMs);
+
+  // The post above was 75 characters: 25 to clear the minimum, one full
+  // 50-character step beyond it, so the base 5 minutes plus one.
+  const earned = await durationOf();
+  check('a 75-character post earns the base window plus one step', () =>
+    assert.equal(earned, 6 * 60_000));
+
+  await worker.evaluate(() => chrome.storage.local.set({ session: null }));
+  await feed.waitForFunction(
+    () => document.documentElement.getAttribute('data-freeradicals') === 'blocked',
+    null, { timeout: 8000 },
+  );
+
+  // Something much longer, through the block screen again.
+  const longPost = Array.from({ length: 40 }, (_, i) => `thought${i}`).join(' ');
+  await feed.bringToFront();
+  await feed.waitForTimeout(400);
+  await feed.keyboard.type(longPost);
+  await feed.keyboard.press('Control+Enter');
+  await feed.waitForFunction(
+    () => document.documentElement.getAttribute('data-freeradicals') !== 'blocked',
+    null, { timeout: 8000 },
+  );
+
+  const longer = await durationOf();
+  check('a much longer post earns a much longer window', () =>
+    assert.ok(longer > earned, `${longer}ms should exceed ${earned}ms`));
+  check('the earned window respects the ceiling', () =>
+    assert.ok(longer <= 20 * 60_000, `${longer}ms exceeds the 20-minute cap`));
+
+  const expected = Math.min(20, 5 + Math.floor((longPost.length - 25) / 50));
+  check('the window matches what the core formula prices', () =>
+    assert.equal(longer, expected * 60_000));
+
+  /* 9. Switching to fixed mode restores a constant window. --------------- */
+  await worker.evaluate(async () => {
+    const { settings } = await chrome.storage.local.get('settings');
+    await chrome.storage.local.set({
+      settings: { ...settings, durationMode: 'fixed' },
+      session: null,
+    });
+  });
+  await feed.waitForFunction(
+    () => document.documentElement.getAttribute('data-freeradicals') === 'blocked',
+    null, { timeout: 8000 },
+  );
+  await feed.bringToFront();
+  await feed.waitForTimeout(400);
+  await feed.keyboard.type(`In fixed mode this very long post should still buy exactly five minutes. ${longPost}`);
+  await feed.keyboard.press('Control+Enter');
+  await feed.waitForFunction(
+    () => document.documentElement.getAttribute('data-freeradicals') !== 'blocked',
+    null, { timeout: 8000 },
+  );
+  const fixed = await durationOf();
+  check('fixed mode buys exactly the configured window', () =>
+    assert.equal(fixed, 5 * 60_000));
 } finally {
   await context.close();
 }

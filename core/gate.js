@@ -3,6 +3,7 @@ import {
   DEFAULT_SETTINGS, JOURNAL_KEY, SESSION_KEY, SETTINGS_KEY,
   normalizeSettings, unlockDurationMs,
 } from './config.js';
+import { earnedDurationMs } from './duration.js';
 import { append, createEntry, isDuplicate, markVerified, stats } from './journal.js';
 import { createSession, evaluate, pendingAgeMs, startClock } from './session.js';
 import { charCount, fingerprint, looksLikeFiller } from './text.js';
@@ -85,7 +86,8 @@ export function createGate({ storage, clock = systemClock, autoClear = false }) 
       status,
       remainingMs,
       endsAt: session && session.phase === 'open' ? session.endsAt : null,
-      durationMs: unlockDurationMs(settings),
+      /** The base window. What a *specific* post buys is earnedDurationMs(text). */
+      baseDurationMs: unlockDurationMs(settings),
       warning: status === 'unlocked' && remainingMs <= settings.warnAtSeconds * 1000,
       session,
       settings,
@@ -138,7 +140,10 @@ export function createGate({ storage, clock = systemClock, autoClear = false }) 
     const entry = createEntry({ text: body, platformId, now, verified: false });
     const session = createSession({
       now,
-      durationMs: unlockDurationMs(settings),
+      // The length is decided here, once, from what was actually written, and
+      // frozen into the session. Editing settings later cannot extend a window
+      // already running.
+      durationMs: earnedDurationMs(body, settings),
       platformId,
       fingerprint: fingerprint(body),
       requireProof: settings.requirePublishProof,

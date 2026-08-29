@@ -1,4 +1,4 @@
-import { formatCountdown, pickQuote } from '../../core/index.js';
+import { earnProgress, formatCountdown, pickQuote } from '../../core/index.js';
 
 /**
  * The block screen and the countdown pill, rendered into a closed shadow root
@@ -61,6 +61,23 @@ textarea:focus { border-color: var(--accent, #7c8cff); box-shadow: 0 0 0 3px col
 .count { color: #6f7789; font-variant-numeric: tabular-nums; }
 .count[data-ok="1"] { color: #4ade80; }
 .error { color: #fca5a5; text-align: right; }
+
+.earn {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  font-size: 13px; color: #8b93a7; min-height: 20px;
+}
+.earn b {
+  color: #f4f4f5; font-weight: 600; font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  transition: color .2s ease;
+}
+.earn[data-grew="1"] b { color: var(--accent, #7c8cff); }
+.earn[data-cap="1"] b { color: #4ade80; }
+.meter {
+  flex: 0 1 120px; min-width: 60px; height: 3px; border-radius: 999px;
+  background: #1e232f; overflow: hidden;
+}
+.meter i { display: block; height: 100%; background: var(--accent, #7c8cff); transition: width .18s ease; }
 
 .actions { display: flex; gap: 10px; flex-wrap: wrap; }
 button {
@@ -154,6 +171,11 @@ export function createOverlay(handlers) {
             <span class="count">0 / 25</span>
             <span class="error" role="alert"></span>
           </div>
+          <div class="earn">
+            <span class="earn-text">This post buys <b class="earn-time">5:00</b></span>
+            <span class="meter"><i class="meter-fill" style="width:0%"></i></span>
+            <span class="earn-next"></span>
+          </div>
           <div class="actions">
             <button class="primary submit">Post &amp; open feed</button>
             <button class="ghost settings" type="button">Settings</button>
@@ -200,6 +222,12 @@ export function createOverlay(handlers) {
     input: $('.input'),
     count: $('.count'),
     error: $('.error'),
+    earn: $('.earn'),
+    earnText: $('.earn-text'),
+    earnTime: $('.earn-time'),
+    earnNext: $('.earn-next'),
+    meter: $('.meter'),
+    meterFill: $('.meter-fill'),
     submit: $('.submit'),
     pending: $('.pending'),
     waitingText: $('.waiting-text'),
@@ -219,12 +247,48 @@ export function createOverlay(handlers) {
 
   let minChars = 25;
   let busy = false;
+  let settings = null;
+  let lastMinutes = 0;
 
+  /**
+   * Recompute the deal on every keystroke. In earned mode the window grows as
+   * you write, so the button has to name the *current* price of the feed rather
+   * than a setting — the whole point is that you can see it moving.
+   */
   function updateCount() {
     const n = els.input.value.trim().length;
     els.count.textContent = `${n} / ${minChars}`;
     els.count.dataset.ok = n >= minChars ? '1' : '0';
     els.submit.disabled = busy || n < minChars;
+    if (!settings) return;
+
+    const earn = earnProgress(els.input.value, settings);
+    const clock = formatCountdown(earn.ms);
+    els.submit.textContent = `Post & open feed for ${clock}`;
+    els.earn.hidden = !earn.earning;
+    if (!earn.earning) return;
+
+    els.earnTime.textContent = clock;
+    els.earn.dataset.cap = earn.atCap ? '1' : '0';
+
+    if (earn.atCap) {
+      els.earnNext.textContent = "that's the maximum";
+      els.meter.hidden = true;
+    } else {
+      els.meter.hidden = false;
+      els.earnNext.textContent = n < minChars
+        ? `${earn.charsToNext} more to unlock posting`
+        : `${earn.charsToNext} more buys ${formatCountdown(earn.nextMinutes * 60_000)}`;
+      const step = settings.earnPerChars || 50;
+      els.meterFill.style.width = `${Math.round(((step - earn.charsToNext) / step) * 100)}%`;
+    }
+
+    // Flash the clock the moment another minute is banked.
+    if (earn.minutes > lastMinutes && lastMinutes > 0) {
+      els.earn.dataset.grew = '1';
+      setTimeout(() => { els.earn.dataset.grew = '0'; }, 600);
+    }
+    lastMinutes = earn.minutes;
   }
 
   async function submit() {
@@ -266,14 +330,16 @@ export function createOverlay(handlers) {
    * @param {object} ctx     { platform, blocked, showPill, canCompose }
    */
   function render(snap, ctx) {
-    const { settings, stats } = snap;
+    const { stats } = snap;
+    settings = snap.settings;
     minChars = settings.minChars;
     host.style.setProperty('--accent', (ctx.platform && ctx.platform.accent) || '#7c8cff');
 
     const name = ctx.platform ? ctx.platform.name : 'This feed';
     els.where.textContent = snap.status === 'pending' ? `${name} — waiting on your post` : `${name} is locked`;
-    els.window.textContent = `${settings.unlockMinutes} minute${settings.unlockMinutes === 1 ? '' : 's'}`;
-    els.submit.textContent = `Post & open feed for ${settings.unlockMinutes}:00`;
+    els.window.textContent = settings.durationMode === 'earned'
+      ? `${settings.unlockMinutes} minutes, and longer the more you write`
+      : `${settings.unlockMinutes} minute${settings.unlockMinutes === 1 ? '' : 's'}`;
     els.today.textContent = stats.today;
     els.streak.textContent = stats.streak;
     els.words.textContent = stats.words.toLocaleString();

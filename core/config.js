@@ -8,8 +8,20 @@ export const SESSION_KEY = 'session';
 export const JOURNAL_KEY = 'journal';
 
 export const DEFAULT_SETTINGS = Object.freeze({
-  /** How long the feed stays open after a post, in minutes. */
+  /**
+   * How the window length is decided.
+   *   'earned' — the base window, plus more time the more you wrote.
+   *   'fixed'  — every post buys exactly `unlockMinutes`.
+   */
+  durationMode: 'earned',
+  /** The base window in minutes: what a post at exactly `minChars` buys. */
   unlockMinutes: 5,
+  /** Characters of writing, beyond `minChars`, that buy one more step. */
+  earnPerChars: 50,
+  /** Minutes added per step earned. */
+  earnMinutesPerStep: 1,
+  /** Ceiling on an earned window, however much you wrote. */
+  maxUnlockMinutes: 20,
   /** Minimum characters before the Post button is enabled. */
   minChars: 25,
   /**
@@ -36,8 +48,13 @@ export const DEFAULT_SETTINGS = Object.freeze({
   journalLimit: 500,
 });
 
+export const DURATION_MODES = ['earned', 'fixed'];
+
 const LIMITS = {
   unlockMinutes: [1, 120],
+  earnPerChars: [5, 2000],
+  earnMinutesPerStep: [1, 60],
+  maxUnlockMinutes: [1, 240],
   minChars: [1, 2000],
   proofOverrideAfterSeconds: [10, 3600],
   duplicateLookback: [0, 500],
@@ -62,13 +79,16 @@ export function normalizeSettings(raw) {
     const value = input[key];
     if (key in LIMITS) out[key] = clampNumber(key, value, fallback);
     else if (typeof fallback === 'boolean') out[key] = Boolean(value);
-    else if (key === 'platformOverrides') {
+    else if (key === 'durationMode') {
+      out.durationMode = DURATION_MODES.includes(value) ? value : DEFAULT_SETTINGS.durationMode;
+    } else if (key === 'platformOverrides') {
       out.platformOverrides = value && typeof value === 'object' ? { ...value } : {};
     }
   }
   return out;
 }
 
+/** The base window — what a post that just clears the minimum buys. */
 export function unlockDurationMs(settings) {
   return normalizeSettings(settings).unlockMinutes * 60_000;
 }

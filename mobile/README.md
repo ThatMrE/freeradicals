@@ -17,6 +17,7 @@ So the mobile app reuses, unchanged:
 | Shared piece | What it gives the app |
 | --- | --- |
 | `core/gate.js` | the state machine and every rule |
+| `core/duration.js` | how long a post buys — the earned window |
 | `core/session.js` | `locked` / `pending` / `unlocked` and the countdown |
 | `core/journal.js` | what you wrote, streaks, repeat detection |
 | `core/platforms.js` | app package names, bundle ids, compose deep links |

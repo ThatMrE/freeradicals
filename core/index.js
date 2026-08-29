@@ -7,6 +7,7 @@
  */
 export * from './clock.js';
 export * from './config.js';
+export * from './duration.js';
 export * from './format.js';
 export * from './gate.js';
 export * from './journal.js';

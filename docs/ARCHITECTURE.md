@@ -7,6 +7,7 @@ core/                  every rule. zero platform APIs. shared verbatim.
 ├── gate.js            the state machine — the only door into "unlocked"
 ├── session.js         locked / pending / unlocked, from a timestamp
 ├── journal.js         what you wrote; streaks; repeat detection
+├── duration.js        how long a given post buys (the earned window)
 ├── platforms.js       one record per network: hosts, routes, selectors,
 │                      publish signals, app ids, compose deep links
 ├── text.js            what counts as writing (length, filler, fingerprints)
@@ -36,6 +37,8 @@ and re-run `npm run build`.
 ### 1. A session is a timestamp, not a timer
 
 An open window is `{ startedAt, endsAt, durationMs }`. Nothing counts down.
+`durationMs` is priced once, at submit, from the post that bought it — so
+changing a setting mid-window cannot stretch a window already running.
 Every surface derives its answer by comparing `endsAt` to the clock, so:
 
 - An MV3 service worker that gets killed for the whole five minutes still gives
@@ -71,6 +74,27 @@ picks the mode per URL:
 
 Unblocking is removing one attribute. Nothing the site owns is ever destroyed.
 
+## How long a window is
+
+`core/duration.js#earnedMinutes(text, settings)` is the whole rule:
+
+```
+chars ≤ minChars          → base window
+chars > minChars          → base + floor((chars − minChars) / earnPerChars) × step
+                            capped at maxUnlockMinutes
+durationMode === 'fixed'  → base window, always
+```
+
+Defaults: 25 characters buys 5:00, every 50 more buys a minute, ceiling 20:00.
+
+`earnProgress(text, settings)` returns the same number plus what a compose box
+needs to show the deal being struck — `charsToNext`, `nextMinutes`, `atCap`.
+The extension's block screen, the popup and the React Native screen all call it
+on every keystroke, so all three quote the same price for the same post. A
+ceiling set below the base is ignored rather than obeyed: the base always wins,
+because a setting that silently shortened your window would be a bug wearing a
+config file.
+
 ## The state machine
 
 ```
@@ -101,6 +125,7 @@ by default because those endpoints are private and change without notice.
 | Paste the same post again | fingerprint matches the journal → refused |
 | Change casing/spacing and retry | fingerprints are normalized first → refused |
 | Post again mid-window to bank time | `ALREADY_OPEN`; the window is unchanged |
+| Pad a post with junk to earn more time | length is necessary, not sufficient — `looksLikeFiller` rejects repeated words and ≤2 distinct characters first |
 | Reload the page | `endsAt` is in storage, not in the tab |
 | Let the service worker die | state is a timestamp; nothing to lose |
 | Sit on the block screen forever | fine — that costs nothing but a blocked feed |

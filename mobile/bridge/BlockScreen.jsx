@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { formatCountdown, getPlatform, pickQuote } from '../../core/index.js';
+import { earnProgress, formatCountdown, getPlatform, pickQuote } from '../../core/index.js';
 
 /**
  * The mobile block screen. Deliberately a near line-for-line translation of
@@ -23,6 +23,9 @@ export function BlockScreen({ snapshot, onSubmit, onOpenComposer, onOverride, ap
   const name = platform ? platform.name : appLabel(appId);
   const accent = platform ? platform.accent : '#7c8cff';
   const long = text.trim().length >= settings.minChars;
+  // Same function the extension's block screen calls, so the two shells quote
+  // the same price for the same post.
+  const earn = earnProgress(text, settings);
 
   async function submit() {
     if (busy || !long) return;
@@ -65,7 +68,9 @@ export function BlockScreen({ snapshot, onSubmit, onOpenComposer, onOverride, ap
       <Text style={styles.title}>Post before you scroll.</Text>
       <Text style={styles.lede}>
         Write something worth publishing. Posting it opens {name} for{' '}
-        {settings.unlockMinutes} minutes — when the timer runs out, it closes and you write again.
+        {settings.unlockMinutes} minutes
+        {earn.earning ? ', and longer the more you write' : ''} — when the timer runs out,
+        it closes and you write again.
       </Text>
 
       <TextInput
@@ -85,13 +90,31 @@ export function BlockScreen({ snapshot, onSubmit, onOpenComposer, onOverride, ap
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </View>
 
+      {earn.earning ? (
+        <View style={styles.earn}>
+          <Text style={styles.earnText}>
+            This post buys{' '}
+            <Text style={[styles.earnTime, earn.atCap && styles.earnCapped]}>
+              {formatCountdown(earn.ms)}
+            </Text>
+          </Text>
+          <Text style={styles.earnNext}>
+            {earn.atCap
+              ? "that's the maximum"
+              : long
+                ? `${earn.charsToNext} more buys ${formatCountdown(earn.nextMinutes * 60_000)}`
+                : `${earn.charsToNext} more to unlock posting`}
+          </Text>
+        </View>
+      ) : null}
+
       <Pressable
         style={[styles.primary, { backgroundColor: accent }, !long && styles.disabled]}
         onPress={submit}
         disabled={!long || busy}
       >
         <Text style={styles.primaryText}>
-          Post &amp; open for {formatCountdown(settings.unlockMinutes * 60_000)}
+          Post &amp; open for {formatCountdown(earn.ms)}
         </Text>
       </Pressable>
 
@@ -121,6 +144,11 @@ const styles = StyleSheet.create({
     padding: 16, fontSize: 16, textAlignVertical: 'top',
   },
   meta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  earn: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 },
+  earnText: { color: '#8b93a7', fontSize: 13 },
+  earnTime: { color: '#f4f4f5', fontSize: 15, fontWeight: '700' },
+  earnCapped: { color: '#4ade80' },
+  earnNext: { color: '#6f7789', fontSize: 12.5, flexShrink: 1, textAlign: 'right' },
   count: { color: '#6f7789', fontSize: 13 },
   countOk: { color: '#4ade80' },
   error: { color: '#fca5a5', fontSize: 13, flexShrink: 1, textAlign: 'right' },

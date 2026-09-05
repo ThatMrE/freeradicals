@@ -164,26 +164,39 @@ reproducible tree to read.
 
 ## Mobile — the honest status
 
-**The pipeline is written. There is no app to run it on yet.**
+The React Native app is scaffolded (`mobile/app`, RN 0.87). **Android is
+wired end to end. iOS needs one step that only Xcode can do.**
 
-`node tools/deploy/mobile.mjs` is the gate that says so, and it exits non-zero
-rather than letting a release look successful:
+`node tools/deploy/mobile.mjs` checks the scaffold's substance rather than its
+existence — that the native module is registered, the permissions enforcement
+needs are declared, the SDK levels clear the stores' floors — and exits
+non-zero on anything missing:
 
 ```
-✓ shared bridge          gate, native mirror, storage adapter and block screen present
-✓ app identifiers        10 Android packages, 10 iOS bundle ids for 10 platforms
-✓ android reference      mobile/android/FeedGateService.kt
-✓ ios reference          mobile/ios/ShieldGate.swift
-✗ app scaffold           The React Native app is not in this repository yet
+✓ android permissions        3 declared
+✓ android components         watcher service and block activity declared
+✓ android native module      GatePackage registered in MainApplication
+✓ android targetSdkVersion   36 (needs 36)
+✓ ios entitlements           family-controls and app group declared
+✓ ios native module          GateBridge exported to React Native
+✗ ios extension targets      sources written, targets not added in Xcode
 ```
 
-What *is* real and tested today: the shared gate logic, the native contract
-(`mobile/bridge/nativeMirror.js`, covered by `tests/mobile.test.js`), the app
-identifier mapping, and the two native reference implementations.
+**The remaining blocker.** The Screen Time shield and the activity monitor are
+app *extensions*. Adding an extension target rewrites `project.pbxproj` in ways
+that cannot be hand-authored safely, so it is done once, in Xcode, by a person —
+`mobile/app/ios/README.md` is the four-step recipe. Their Swift sources are
+finished and waiting.
 
-What is missing: the React Native app in `mobile/app`. Once it exists,
-`mobile/fastlane/Fastfile` runs unchanged — `fastlane ios beta`,
-`fastlane android beta`.
+**What has not been verified.** Nothing here has been compiled: this
+environment has no Android SDK and no Xcode. `tests/app.test.js` covers what
+can be checked without a build — every source parses, every relative import
+resolves, and every native method JavaScript calls exists *and* is exported on
+that platform, which is the failure that would otherwise be silent. The first
+`npm run android` is the first real test.
+
+Once the iOS targets exist, `mobile/fastlane/Fastfile` runs unchanged —
+`fastlane ios beta`, `fastlane android beta`.
 
 ### Deadlines the pipeline enforces
 

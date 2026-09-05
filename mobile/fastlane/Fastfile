@@ -140,7 +140,7 @@ platform :android do
 
   def require_target_sdk!
     required = CONFIG.dig("android", "targetSdk")
-    gradle_file = "#{APP_DIR}/android/app/build.gradle"
+    gradle_file = "#{APP_DIR}/android/build.gradle"
     UI.user_error!("missing #{gradle_file}") unless File.exist?(gradle_file)
     found = File.read(gradle_file)[/targetSdk(?:Version)?\s*=?\s*(\d+)/, 1]
     return if found && found.to_i >= required

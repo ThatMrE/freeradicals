@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!--
+    Family Controls is request-only: Apple must grant it before a Screen Time
+    shield can ship, and signing fails without it. Request it early — it is a
+    review, not a checkbox. The Fastlane lane checks for this key and fails
+    with that explanation rather than letting signing fail obscurely.
+  -->
+  <key>com.apple.developer.family-controls</key>
+  <true/>
+
+  <!--
+    The app and the two Screen Time extensions are separate processes. The App
+    Group is the only place all three can read the same gate state.
+  -->
+  <key>com.apple.security.application-groups</key>
+  <array>
+    <string>group.com.freeradicals</string>
+  </array>
+</dict>
+</plist>

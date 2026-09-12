@@ -63,34 +63,98 @@
 
   <section id="how">
     <h2>What it actually does</h2>
-    <p class="sub">Every screenshot below is the real extension, captured running in a browser.</p>
+    <p class="sub">
+      Every frame below is the real extension, captured by a script that drives it in a
+      browser — <code>node tools/capture-demo.mjs</code> reproduces all of them. Nothing here
+      is a mockup, and the feed behind it is a labelled test fixture rather than someone's
+      real timeline.
+    </p>
 
     <div class="shots">
       <figure>
-        <img src="/img/01-blocked.jpg" alt="The Free Radicals block screen covering a social feed, with an empty compose box." loading="lazy" width="1280" height="860" />
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i><span class="url">x.com/home</span></div>
+          <img src="/img/01-blocked.jpg" alt="The Free Radicals block screen covering a social feed, with an empty compose box." loading="lazy" width="1280" height="860" />
+        </div>
         <figcaption><b>You open a feed. It isn't there.</b> A compose box is, along with what you've written lately and how long your streak is.</figcaption>
       </figure>
 
       <figure>
-        <img src="/img/03-earning-more.jpg" alt="The block screen with 166 characters written; the button reads Post and open feed for 7:00 and a meter shows 9 more characters buys 8:00." loading="lazy" width="1280" height="860" />
-        <figcaption><b>The price moves while you write.</b> 166 characters has earned 7:00, and the meter says nine more characters buys 8:00. The trade is visible while you're making it, not after.</figcaption>
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i><span class="url">x.com/home</span></div>
+          <img src="/img/03-earning-more.jpg" alt="The block screen with 160 characters written; the button reads Post and open feed for 7:00 and a meter shows 15 more characters buys 8:00." loading="lazy" width="1280" height="860" />
+        </div>
+        <figcaption><b>The price moves while you write.</b> 160 characters has earned 7:00, and the meter says fifteen more buys 8:00. The trade is visible while you're making it, not after.</figcaption>
       </figure>
 
       <figure>
-        <img src="/img/04-open.jpg" alt="A feed visible again with a small countdown pill in the corner reading 7:00." loading="lazy" width="1280" height="860" />
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i><span class="url">x.com/home</span></div>
+          <img src="/img/04-open.jpg" alt="A feed visible again with a small countdown pill in the corner reading 7:00." loading="lazy" width="1280" height="860" />
+        </div>
         <figcaption><b>Post it, and the feed comes back</b> — with a countdown in the corner so you always know what's left.</figcaption>
       </figure>
 
       <div class="pair">
         <figure>
-          <img src="/img/05-warning.jpg" alt="The countdown pill showing 0:18 in red." loading="lazy" width="1280" height="860" />
+          <div class="browser">
+            <div class="bar"><i></i><i></i><i></i><span class="url">x.com/home</span></div>
+            <img src="/img/05-warning.jpg" alt="The countdown pill showing 0:18 in red." loading="lazy" width="1280" height="860" />
+          </div>
           <figcaption><b>The last minute turns red.</b></figcaption>
         </figure>
         <figure>
-          <img src="/img/07-repeat-refused.jpg" alt="The block screen refusing a repeated post with the message: You already posted that. The gate needs something new." loading="lazy" width="1280" height="860" />
+          <div class="browser">
+            <div class="bar"><i></i><i></i><i></i><span class="url">x.com/home</span></div>
+            <img src="/img/07-repeat-refused.jpg" alt="The block screen refusing a repeated post with the message: You already posted that. The gate needs something new." loading="lazy" width="1280" height="860" />
+          </div>
           <figcaption><b>And the same post can't buy a second window.</b></figcaption>
         </figure>
       </div>
+    </div>
+
+    <h3 class="strip-title">The same gate at phone width</h3>
+    <p class="sub">
+      A 390-pixel browser, which is the width the mobile app's block screen is built for too —
+      it shares this component rather than reimplementing it.
+    </p>
+    <div class="phones">
+      <figure>
+        <div class="phone"><div class="screen">
+          <img src="/img/phone-01-blocked.jpg" alt="The block screen on a phone-width display, compose box empty." loading="lazy" width="390" height="844" />
+        </div></div>
+        <figcaption>The feed is closed.</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><div class="screen">
+          <img src="/img/phone-03-earning-more.jpg" alt="The phone-width block screen with 160 characters written, buying 7:00." loading="lazy" width="390" height="844" />
+        </div></div>
+        <figcaption>160 characters buys 7:00.</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><div class="screen">
+          <img src="/img/phone-04-open.jpg" alt="A phone-width feed, visible, with the countdown pill reading 7:00." loading="lazy" width="390" height="844" />
+        </div></div>
+        <figcaption>Posted; the feed is back.</figcaption>
+      </figure>
+    </div>
+
+    <h3 class="strip-title">The two surfaces that aren't the block screen</h3>
+    <div class="pair">
+      <figure>
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i><span class="url">toolbar popup</span></div>
+          <img src="/img/08-popup.jpg" alt="The extension's toolbar popup, with a compose box and the current status." loading="lazy" width="420" height="560" />
+        </div>
+        <figcaption><b>The popup posts from anywhere.</b> You don't have to be sitting on a blocked feed to buy the next window.</figcaption>
+      </figure>
+      <figure>
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i><span class="url">settings</span></div>
+          <img src="/img/09-settings.jpg" alt="The settings page, showing the window length mode, base window, minimum length, characters per step, minutes per step and the ceiling." loading="lazy" width="1280" height="860" />
+        </div>
+        <figcaption><b>Every number in the rule is yours.</b> The base window, the minimum, how many characters buy a step, what a step is worth, the ceiling — with a worked example that updates as you change them.</figcaption>
+      </figure>
     </div>
   </section>
 

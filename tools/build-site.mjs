@@ -164,7 +164,9 @@ ${body}
 /* ---------- run ---------- */
 
 const privacyMd = readFileSync(join(ROOT, 'docs/PRIVACY.md'), 'utf8');
-const sourceLink = 'https://github.com/ThatMrE/freeradicals/blob/main/docs/PRIVACY.md';
+// blob/HEAD resolves to whatever the default branch is called, so renaming it
+// (or this link's author guessing wrong) does not 404 the policy's source.
+const sourceLink = 'https://github.com/ThatMrE/freeradicals/blob/HEAD/docs/PRIVACY.md';
 const privacyHtml = page({
   title: 'Privacy — Free Radicals',
   description: 'What Free Radicals stores, what it can see, and what leaves your machine (nothing).',

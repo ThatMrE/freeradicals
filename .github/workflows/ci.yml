@@ -90,6 +90,14 @@ jobs:
           FR_HAVE_EDGE: ${{ steps.edge.outcome == 'success' && '1' || '0' }}
         run: node tools/preflight.mjs
 
+      # A screenshot at the wrong aspect ratio is invisible to every check that
+      # does not rasterise, so this one opens the built site in the Chromium
+      # already installed above and measures what is actually drawn.
+      - name: Site renders correctly in a browser
+        run: |
+          npm run build:site
+          node tools/check-site-render.mjs
+
       - name: Upload store packages
         uses: actions/upload-artifact@v4
         with:

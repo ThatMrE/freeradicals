@@ -73,7 +73,10 @@ h3 { font-size: 17px; margin: 0 0 6px; font-weight: 600; }
 .shots { display: grid; gap: 34px; }
 figure { margin: 0; }
 figure img {
-  width: 100%; display: block; border-radius: 14px;
+  /* height:auto is load-bearing: the width/height attributes on the tags are
+     there to reserve layout space, and without this the attribute height wins
+     over the scaled width and every screenshot renders squashed. */
+  width: 100%; height: auto; display: block; border-radius: 14px;
   border: 1px solid var(--line); background: var(--panel);
 }
 figcaption { color: var(--muted); font-size: 14.5px; margin-top: 12px; max-width: 70ch; }
@@ -97,7 +100,7 @@ figcaption b { color: var(--text); font-weight: 600; }
   background: #0e1119; border: 1px solid var(--line); border-radius: 999px;
   font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--faint);
 }
-.browser img, .phone img { border: 0; border-radius: 0; }
+.browser img, .phone img { width: 100%; height: auto; border: 0; border-radius: 0; }
 
 .strip-title { font-size: 19px; margin: 52px 0 8px; font-weight: 640; }
 .phones { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 26px; max-width: 860px; }
@@ -167,8 +170,14 @@ footer a:hover { color: var(--text); }
 
 @media (max-width: 720px) {
   .pair { grid-template-columns: 1fr; }
-  .phones { grid-template-columns: 1fr 1fr; }
   .browser .url { display: none; }
+  /* Four phones squeezed into a phone screen are unreadable; one and a bit,
+     swiped, is not. The overflow is the strip's own, never the page's. */
+  .phones {
+    display: flex; gap: 16px; overflow-x: auto; max-width: none;
+    scroll-snap-type: x mandatory; padding-bottom: 6px;
+  }
+  .phones figure { flex: 0 0 64%; scroll-snap-align: center; }
   .nav a { margin-left: 14px; }
   section { padding: 42px 0; }
 }

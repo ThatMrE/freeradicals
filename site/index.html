@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Free Radicals — post before you scroll</title>
+<meta name="description" content="A browser extension that keeps social feeds closed until you publish something. Posting buys a timed window, and the longer the post, the longer the window." />
+<meta property="og:title" content="Free Radicals — post before you scroll" />
+<meta property="og:description" content="Social feeds stay closed until you publish something. Produce before you consume." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="/img/01-blocked.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+<header class="wrap">
+  <nav class="nav">
+    <span class="brand">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M50 18a32 32 0 1 0 22.6 9.4" fill="none" stroke="#7c8cff" stroke-width="11" stroke-linecap="round"/>
+        <circle cx="79" cy="21" r="11" fill="#7c8cff"/>
+      </svg>
+      Free Radicals
+    </span>
+    <span>
+      <a href="#how">How it works</a>
+      <a href="#install">Install</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="https://github.com/ThatMrE/freeradicals">GitHub</a>
+    </span>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <section class="hero" style="border-top:none">
+    <h1>Post before you scroll.</h1>
+    <p class="lede">
+      Social feeds stay closed until you publish something. Writing a post buys you a
+      timed window — and <b>the longer the post, the longer the window</b>. When the
+      timer hits zero the feed closes, and the next one costs another post.
+    </p>
+    <p class="lede">Produce before you consume.</p>
+
+    <div class="rule">
+      <span>25 characters</span><span class="arrow">→</span><b>5:00</b>
+      <span class="arrow">·</span>
+      <span>+50 characters</span><span class="arrow">→</span><b>6:00</b>
+      <span class="arrow">·</span>
+      <span>…up to</span><b>20:00</b>
+    </div>
+
+    <div class="cta">
+      <a class="btn primary" href="#install">Install it</a>
+      <a class="btn ghost" href="https://github.com/ThatMrE/freeradicals">Read the source</a>
+    </div>
+    <p class="note" style="margin-top:16px">
+      Free and open source. No account, no server, no analytics.
+    </p>
+  </section>
+
+  <section id="how">
+    <h2>What it actually does</h2>
+    <p class="sub">Every screenshot below is the real extension, captured running in a browser.</p>
+
+    <div class="shots">
+      <figure>
+        <img src="/img/01-blocked.jpg" alt="The Free Radicals block screen covering a social feed, with an empty compose box." loading="lazy" width="1280" height="860" />
+        <figcaption><b>You open a feed. It isn't there.</b> A compose box is, along with what you've written lately and how long your streak is.</figcaption>
+      </figure>
+
+      <figure>
+        <img src="/img/03-earning-more.jpg" alt="The block screen with 166 characters written; the button reads Post and open feed for 7:00 and a meter shows 9 more characters buys 8:00." loading="lazy" width="1280" height="860" />
+        <figcaption><b>The price moves while you write.</b> 166 characters has earned 7:00, and the meter says nine more characters buys 8:00. The trade is visible while you're making it, not after.</figcaption>
+      </figure>
+
+      <figure>
+        <img src="/img/04-open.jpg" alt="A feed visible again with a small countdown pill in the corner reading 7:00." loading="lazy" width="1280" height="860" />
+        <figcaption><b>Post it, and the feed comes back</b> — with a countdown in the corner so you always know what's left.</figcaption>
+      </figure>
+
+      <div class="pair">
+        <figure>
+          <img src="/img/05-warning.jpg" alt="The countdown pill showing 0:18 in red." loading="lazy" width="1280" height="860" />
+          <figcaption><b>The last minute turns red.</b></figcaption>
+        </figure>
+        <figure>
+          <img src="/img/07-repeat-refused.jpg" alt="The block screen refusing a repeated post with the message: You already posted that. The gate needs something new." loading="lazy" width="1280" height="860" />
+          <figcaption><b>And the same post can't buy a second window.</b></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Where it applies</h2>
+    <p class="sub">Ten networks, each one toggleable.</p>
+    <div class="nets">
+      <span class="net">X</span><span class="net">Facebook</span><span class="net">Instagram</span>
+      <span class="net">LinkedIn</span><span class="net">Reddit</span><span class="net">YouTube</span>
+      <span class="net">TikTok</span><span class="net">Threads</span><span class="net">Bluesky</span>
+      <span class="net">Mastodon</span>
+    </div>
+    <p class="callout">
+      It isn't a blanket ban on the site. <b>reddit.com</b> is blocked; a thread you chose to
+      open is not. YouTube's home page is blocked; a video you searched for plays, minus the
+      recommendation rail. Your messages and your own profile stay reachable. The target is
+      the infinite feed, not the network.
+    </p>
+  </section>
+
+  <section>
+    <h2>What counts as a post</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Filler is refused</h3>
+        <p><code>aaaaaaa…</code> and <code>asdf asdf asdf</code> don't clear the bar, however long they are. Length is necessary, not sufficient.</p>
+      </div>
+      <div class="card">
+        <h3>Repeats are refused</h3>
+        <p>The same text can't buy a second window. Changing the casing or the spacing doesn't make it new.</p>
+      </div>
+      <div class="card">
+        <h3>You can't bank time</h3>
+        <p>Posting again mid-window doesn't extend it. Reloading doesn't help either — the window lives in storage, not in the tab.</p>
+      </div>
+      <div class="card">
+        <h3>Optional: prove you published</h3>
+        <p>Turn on proof mode and the clock starts when your post actually goes live on the network, not when you press the button.</p>
+      </div>
+    </div>
+    <p class="callout">
+      What deliberately <b>isn't</b> prevented: turning the extension off. It's a speed bump
+      between the reflex and the feed, not a lock. A tool that fights its owner gets
+      uninstalled by the end of the week.
+    </p>
+  </section>
+
+  <section id="install">
+    <h2>Install it</h2>
+    <p class="sub">
+      Not on the Chrome Web Store yet, so it installs unpacked — which takes about a minute
+      and means you can read every line of what you're running.
+    </p>
+    <ol class="steps">
+      <li>Download the package for your browser and unzip it.</li>
+      <li>Open <code>chrome://extensions</code> and turn on <b>Developer mode</b>.</li>
+      <li>Click <b>Load unpacked</b> and pick the unzipped folder.</li>
+      <li>Open a feed. It'll be waiting for you.</li>
+    </ol>
+
+    <div class="dl" id="downloads">
+      <a href="/downloads/freeradicals-chrome.zip">Chrome <small>.zip</small></a>
+      <a href="/downloads/freeradicals-edge.zip">Edge <small>.zip</small></a>
+      <a href="/downloads/freeradicals-firefox.zip">Firefox <small>.zip</small></a>
+      <a href="/downloads/checksums.txt">Checksums <small>SHA-256</small></a>
+    </div>
+    <p class="note" style="margin-top:14px">
+      Firefox needs a different build (no MV3 service worker), which is why it's a separate
+      package. Packages are byte-reproducible from the source, so the checksums are worth
+      checking.
+    </p>
+
+    <p class="callout">
+      <b>On mobile:</b> an Android and iOS app is built but not released. Android puts the same
+      block screen over a feed app; iOS uses Screen Time, because no third-party app may draw
+      over another there. Progress is in the repository.
+    </p>
+  </section>
+
+  <section>
+    <h2>Privacy, briefly</h2>
+    <ul class="plain">
+      <li><b>No server.</b> There is nothing to send anything to.</li>
+      <li><b>No account, no analytics, no telemetry.</b></li>
+      <li><b>Your writing stays in your browser</b>, and the settings page will export or delete it.</li>
+      <li><b>It runs on ten named sites</b>, listed one by one in the manifest — no wildcard access.</li>
+    </ul>
+    <p style="margin-top:24px"><a href="/privacy.html">The full privacy policy →</a></p>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <span>Free Radicals — free and open source.</span>
+  <span>
+    <a href="https://github.com/ThatMrE/freeradicals">GitHub</a>
+    <a href="/privacy.html">Privacy</a>
+  </span>
+</footer>
+
+</body>
+</html>

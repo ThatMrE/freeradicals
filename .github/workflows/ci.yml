@@ -41,6 +41,14 @@ jobs:
             extension/content/routes.generated.js \
             extension/content/signals.generated.js
 
+      # The landing page carries the install downloads and the privacy policy
+      # URL the Chrome Web Store listing points at. A rename in the build
+      # script would 404 both, silently.
+      - name: Site builds and every link resolves
+        run: |
+          npm run build:site
+          node tools/check-site.mjs
+
   preflight:
     name: Preflight (packages, browsers, stores)
     runs-on: ubuntu-latest

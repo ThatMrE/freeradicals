@@ -92,28 +92,30 @@ The gate logic lives in `core/`, which imports nothing — no DOM, no `chrome.*`
 no React Native. A test fails the build if that ever changes. The Chrome
 extension is one shell over it; a mobile app is another.
 
-`mobile/bridge/` is real, runnable JavaScript: an AsyncStorage adapter, the gate
-controller, a React hook, and the block screen translated to React Native
-primitives. `mobile/android/` and `mobile/ios/` are reference implementations of
-the parts that must be native.
-
-The short version of what ports and what does not:
+`mobile/app/` is a React Native app sharing that core: the same gate, the same
+block screen, the same earned window.
 
 - **Android** does what the extension does — `UsageStatsManager` to see the
-  foreground app, `SYSTEM_ALERT_WINDOW` to draw the block screen over it.
+  foreground app, then the block screen over it. Wired end to end.
 - **iOS cannot overlay another app, ever.** The supported route is Screen Time
   (FamilyControls + ManagedSettings + DeviceActivity), which shields the app and
-  routes its unlock button into yours. It needs an entitlement from Apple.
+  routes its unlock button into yours. It needs an entitlement from Apple, and
+  its two extension targets have to be added in Xcode — the sources are
+  written, and the release gate reports iOS as blocked until they exist.
 
-Both work because a window is stored as an absolute timestamp, so native code
-gets one number and needs no running JavaScript. Full guide:
-[mobile/README.md](mobile/README.md).
+Both work because a window is stored as an absolute timestamp: native code gets
+one number and needs no running JavaScript, which is why the mobile port needed
+no new gate logic at all.
+
+Nothing mobile has been compiled here — there is no Android SDK or Xcode in
+CI — so the tests cover parsing, import resolution, and the JavaScript↔native
+method contract instead. Full guide: [mobile/README.md](mobile/README.md).
 
 ## Development
 
 ```bash
 npm ci                # dev dependencies only; the extension itself ships none
-npm test              # 119 unit tests
+npm test              # 131 unit tests
 npm run test:e2e      # loads the extension into real Chromium and drives it
 npm run build         # manifests, icons, and a package per browser
 npm run preflight     # everything, in the order CI runs it
@@ -141,8 +143,8 @@ That runs the full preflight against the exact artifacts, then submits to every
 store it has credentials for — Chrome (v2 API), Edge, and AMO. Stores without
 credentials are skipped rather than failing the release. Safari gets a
 converter-ready tree; iOS and Android have a complete Fastlane pipeline and a
-readiness gate that currently, and loudly, reports the missing piece: there is
-no React Native app in this repository yet.
+readiness gate that checks the app's substance — native module registered,
+permissions declared, SDK levels current — and reports exactly what is left.
 
 The full method, per store — endpoints, credentials, review gotchas, and the
 2026 SDK deadlines — is in [docs/RELEASING.md](docs/RELEASING.md).

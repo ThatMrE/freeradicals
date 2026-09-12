@@ -53,7 +53,7 @@ run('generated files match the registry', 'git',
 /* 2. The logic, all ten platforms, and the packaging rules. ----------------- */
 run('unit tests', node, ['--test',
   'tests/core.test.js', 'tests/platforms.test.js', 'tests/package.test.js',
-  'tests/mobile.test.js', 'tests/portability.test.js']);
+  'tests/mobile.test.js', 'tests/app.test.js', 'tests/portability.test.js']);
 
 /* 3. Build every store package. -------------------------------------------- */
 run('package all targets', node, ['tools/build.mjs']);

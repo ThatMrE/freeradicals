@@ -1,0 +1,52 @@
+# Netlify config for the Free Radicals landing page.
+#
+# The site is static and carries no JavaScript of its own; the build's only job
+# is to render docs/PRIVACY.md into site/privacy.html and drop the freshly built
+# extension packages into site/downloads/ so the install links resolve.
+
+[build]
+  publish = "site"
+  command = "npm run build:site"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # The build is plain Node and needs no browsers; stop playwright's postinstall
+  # from pulling ~400 MB into every deploy.
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = "1"
+
+[[redirects]]
+  from = "/privacy"
+  to = "/privacy.html"
+  status = 301
+
+[[redirects]]
+  from = "/download"
+  to = "/#install"
+  status = 302
+
+[[redirects]]
+  from = "/source"
+  to = "https://github.com/ThatMrE/freeradicals"
+  status = 302
+
+# A page that claims "no server, no analytics" should be provably unable to
+# phone home: no script at all, and nothing loaded from anywhere but here.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
+# Package names are stable across releases, so they must not be cached hard.
+[[headers]]
+  for = "/downloads/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

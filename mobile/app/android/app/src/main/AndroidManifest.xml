@@ -1,0 +1,79 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+      Everything below is what enforcement costs on Android. Each is requested
+      for one reason and nothing else:
+
+      PACKAGE_USAGE_STATS   see which app is in the foreground. Granted by hand
+                            in Settings; there is no runtime prompt for it.
+      SYSTEM_ALERT_WINDOW   permits launching the block screen from the
+                            background, over the app the user just opened.
+      FOREGROUND_SERVICE    keep the watcher alive; Android 14+ also requires a
+       (+ _SPECIAL_USE)     declared type, and this use fits none of the
+                            standard ones.
+      POST_NOTIFICATIONS    the ongoing notification the foreground service must
+                            show, which is also how the user knows it is running.
+      QUERY_ALL_PACKAGES is deliberately NOT requested: the app never enumerates
+      installed apps, it only compares the foreground package to a fixed list.
+    -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+      android:name=".MainApplication"
+      android:label="@string/app_name"
+      android:icon="@mipmap/ic_launcher"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:allowBackup="false"
+      android:theme="@style/AppTheme"
+      android:usesCleartextTraffic="${usesCleartextTraffic}"
+      android:supportsRtl="true">
+      <activity
+        android:name=".MainActivity"
+        android:label="@string/app_name"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+        android:launchMode="singleTask"
+        android:windowSoftInputMode="adjustResize"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+      </activity>
+
+      <!--
+        The block screen. Launched by the watcher over a feed app, so it is not
+        in recents and does not belong to the main task: dismissing it should
+        return the user to where they were, not into the app.
+      -->
+      <activity
+        android:name=".BlockActivity"
+        android:label="@string/app_name"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+        android:launchMode="singleInstance"
+        android:excludeFromRecents="true"
+        android:taskAffinity=".block"
+        android:windowSoftInputMode="adjustResize"
+        android:showWhenLocked="false"
+        android:exported="false" />
+
+      <service
+        android:name=".FeedGateService"
+        android:foregroundServiceType="specialUse"
+        android:exported="false">
+        <property
+          android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+          android:value="Continuously checks which app is in the foreground so a
+            social feed can be covered until the user publishes something. The
+            work is user-initiated, on-device, and cannot be deferred without
+            defeating the feature." />
+      </service>
+    </application>
+</manifest>

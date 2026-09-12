@@ -33,7 +33,7 @@ header { padding: 26px 0; }
 .nav a { color: var(--muted); text-decoration: none; font-size: 14.5px; margin-left: 20px; }
 .nav a:hover { color: var(--text); }
 
-.hero { padding: 56px 0 40px; }
+.hero { padding: 56px 0 40px; border-top: none; }
 h1 {
   font-size: clamp(36px, 6vw, 60px); line-height: 1.05; margin: 0 0 20px;
   font-weight: 680; letter-spacing: -0.03em; max-width: 16ch;
@@ -62,6 +62,8 @@ h1 {
 .btn.ghost { border-color: var(--line); color: var(--muted); }
 .btn.ghost:hover { color: var(--text); border-color: #3d4557; }
 .note { font-size: 13.5px; color: var(--faint); }
+.gap { margin-top: 15px; }
+.more { margin-top: 24px; }
 
 section { padding: 54px 0; border-top: 1px solid var(--line); }
 h2 { font-size: clamp(24px, 3.4vw, 32px); letter-spacing: -0.02em; margin: 0 0 12px; font-weight: 650; }

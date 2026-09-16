@@ -158,6 +158,52 @@
     </div>
   </section>
 
+  <section id="app">
+    <h2>On your phone</h2>
+    <p class="sub">
+      Android runs the same gate. A foreground-app watcher notices Instagram coming to the
+      front and puts the block screen over it — and that block screen is the same component
+      the extension renders, over the same rules in <code>core/</code>. One gate, two shells,
+      so the phone and the browser can never quote different prices for the same post.
+    </p>
+
+    <div class="phones four">
+      <figure>
+        <div class="phone"><div class="screen">
+          <img src="/img/app-01-overlay.jpg" alt="The app's block screen over Instagram, reading INSTAGRAM IS LOCKED with an empty compose box." loading="lazy" width="390" height="844" />
+        </div></div>
+        <figcaption>Instagram comes to the front. The gate is there first.</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><div class="screen">
+          <img src="/img/app-02-earning.jpg" alt="The same screen with a long post written; the button reads Post and open for 7:00." loading="lazy" width="390" height="844" />
+        </div></div>
+        <figcaption>Same meter, same price: 160 characters buys 7:00.</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><div class="screen">
+          <img src="/img/app-03-home.jpg" alt="The app's home screen: feeds open with 7:00 left, a streak, and the post just written." loading="lazy" width="390" height="844" />
+        </div></div>
+        <figcaption>The app itself: what's open, and what you wrote.</figcaption>
+      </figure>
+      <figure>
+        <div class="phone"><div class="screen">
+          <img src="/img/app-04-settings.jpg" alt="The app's settings: enforcement permissions, the earning rule's numbers, and a toggle per network." loading="lazy" width="390" height="844" />
+        </div></div>
+        <figcaption>Permissions, the rule's numbers, a toggle per app.</figcaption>
+      </figure>
+    </div>
+
+    <p class="callout">
+      <b>Those four are the app's own screens</b>, rendered from <code>mobile/app/src</code> at
+      phone size by <code>npm run capture:app</code> — not photographs of a device, which is
+      exactly why the settings screen is saying the native module is absent: in that render it
+      is. The APK is built by CI on every push to the default branch and published as a
+      <a href="https://github.com/ThatMrE/freeradicals/releases">pre-release you can sideload</a>.
+      iOS is Screen Time, and still needs the one step only Xcode can do.
+    </p>
+  </section>
+
   <section>
     <h2>Where it applies</h2>
     <p class="sub">Ten networks, each one toggleable.</p>

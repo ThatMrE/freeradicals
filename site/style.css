@@ -104,6 +104,7 @@ figcaption b { color: var(--text); font-weight: 600; }
 
 .strip-title { font-size: 19px; margin: 52px 0 8px; font-weight: 640; }
 .phones { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 26px; max-width: 860px; }
+.phones.four { max-width: none; gap: 20px; }
 .phone {
   border: 1px solid #3a4257; border-radius: 28px; padding: 12px 8px 10px;
   box-shadow: 0 18px 40px rgba(0, 0, 0, .35);

@@ -4,17 +4,17 @@ import test from 'node:test';
 import {
   DEFAULT_SETTINGS, PLATFORMS, createGate, createManualClock, createMemoryStorage,
 } from '../core/index.js';
-import { blockedAppIds, composeIntent } from '../mobile/bridge/appIds.js';
+import { blockedAppIds, composeIntent, platformForAppId } from '../mobile/bridge/appIds.js';
 import { attachNativeMirror, gateStateFor } from '../mobile/bridge/nativeMirror.js';
 
 /**
  * The iOS and Android halves of the port.
  *
- * There is no React Native app in this repository yet, so what is testable is
- * the seam: the record the shared gate hands to native code. That record is the
- * whole contract — get it wrong and an Android overlay lets a feed through, or
- * an iOS shield never lifts — and it is pure JavaScript, so it can be tested
- * properly here rather than discovered on a device.
+ * What is testable without a device is the seam: the record the shared gate
+ * hands to native code, and the registry lookups the block screen renders from.
+ * That record is the whole contract — get it wrong and an Android overlay lets
+ * a feed through, or an iOS shield never lifts — and it is pure JavaScript, so
+ * it can be tested properly here rather than discovered on a phone.
  */
 
 const MIN = 60_000;
@@ -135,4 +135,30 @@ test('iOS and Android get different identifiers where the apps differ', () => {
   assert.notEqual(x.mobile.android, x.mobile.ios, 'X ships under different ids per store');
   const yt = PLATFORMS.find((p) => p.id === 'youtube');
   assert.notEqual(yt.mobile.android, yt.mobile.ios);
+});
+
+/**
+ * The block screen is handed the foreground app's identifier and has to say
+ * what it is. Splitting the package name on dots does not do that: it names
+ * com.instagram.android "android" and TikTok "musically".
+ */
+test('a native app identifier resolves to the platform, not to its last path segment', () => {
+  for (const platform of PLATFORMS) {
+    assert.equal(platformForAppId(platform.mobile.android)?.id, platform.id,
+      `${platform.mobile.android} should resolve to ${platform.id}`);
+    assert.equal(platformForAppId(platform.mobile.ios)?.id, platform.id,
+      `${platform.mobile.ios} should resolve to ${platform.id}`);
+  }
+});
+
+test('the resolved name is the one a person would use for the app', () => {
+  assert.equal(platformForAppId('com.instagram.android').name, 'Instagram');
+  assert.equal(platformForAppId('com.zhiliaoapp.musically').name, 'TikTok');
+  assert.equal(platformForAppId('com.google.android.youtube').name, 'YouTube');
+});
+
+test('an app we do not gate resolves to nothing rather than to a guess', () => {
+  for (const unknown of ['com.some.other.app', '', null, undefined]) {
+    assert.equal(platformForAppId(unknown), null);
+  }
 });

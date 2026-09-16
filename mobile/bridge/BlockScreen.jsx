@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { earnProgress, formatCountdown, getPlatform, pickQuote } from '../../core/index.js';
+import { platformForAppId } from './appIds.js';
 
 /**
  * The mobile block screen. Deliberately a near line-for-line translation of
@@ -20,7 +21,11 @@ export function BlockScreen({ snapshot, onSubmit, onOpenComposer, onOverride, ap
 
   const { settings, stats, status } = snapshot;
   const platform = getPlatform(snapshot.session?.platformId) || null;
-  const name = platform ? platform.name : appLabel(appId);
+  // `heading` opens a sentence, `inline` sits inside one. They differ only when
+  // the app is one we do not recognise: "This feed" against "this feed".
+  const { heading, inline } = platform
+    ? { heading: platform.name, inline: platform.name }
+    : appLabel(appId);
   const accent = platform ? platform.accent : '#7c8cff';
   const long = text.trim().length >= settings.minChars;
   // Same function the extension's block screen calls, so the two shells quote
@@ -45,11 +50,11 @@ export function BlockScreen({ snapshot, onSubmit, onOpenComposer, onOverride, ap
       <View style={styles.screen}>
         <View style={styles.row}>
           <ActivityIndicator color={accent} />
-          <Text style={styles.waiting}>Waiting for your post to appear on {name}…</Text>
+          <Text style={styles.waiting}>Waiting for your post to appear on {inline}…</Text>
         </View>
         <Text style={styles.echo}>{snapshot.journal[0]?.text}</Text>
         <Pressable style={[styles.primary, { backgroundColor: accent }]} onPress={onOpenComposer}>
-          <Text style={styles.primaryText}>Open {name}'s composer</Text>
+          <Text style={styles.primaryText}>Open {inline}'s composer</Text>
         </Pressable>
         {snapshot.proofOverrideAvailable ? (
           <Pressable style={styles.ghost} onPress={onOverride}>
@@ -64,10 +69,10 @@ export function BlockScreen({ snapshot, onSubmit, onOpenComposer, onOverride, ap
 
   return (
     <View style={styles.screen}>
-      <Text style={[styles.eyebrow, { color: accent }]}>{name.toUpperCase()} IS LOCKED</Text>
+      <Text style={[styles.eyebrow, { color: accent }]}>{heading.toUpperCase()} IS LOCKED</Text>
       <Text style={styles.title}>Post before you scroll.</Text>
       <Text style={styles.lede}>
-        Write something worth publishing. Posting it opens {name} for{' '}
+        Write something worth publishing. Posting it opens {inline} for{' '}
         {settings.unlockMinutes} minutes
         {earn.earning ? ', and longer the more you write' : ''} — when the timer runs out,
         it closes and you write again.
@@ -129,8 +134,16 @@ export function BlockScreen({ snapshot, onSubmit, onOpenComposer, onOverride, ap
   );
 }
 
+/**
+ * What to call the thing being blocked. Two forms, because the same label has
+ * to open a sentence and sit inside one: an unrecognised app is "This feed" at
+ * the start and "this feed" in the middle, and neither is ever a package name.
+ */
 function appLabel(appId) {
-  return appId ? String(appId).split('.').pop() : 'This feed';
+  const platform = platformForAppId(appId);
+  return platform
+    ? { heading: platform.name, inline: platform.name }
+    : { heading: 'This feed', inline: 'this feed' };
 }
 
 const styles = StyleSheet.create({

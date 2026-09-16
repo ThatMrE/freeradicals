@@ -74,6 +74,12 @@ is reported as stale so it gets deleted rather than carried forever.
 
 ## Chrome Web Store
 
+> This section is the **upload API**. The listing itself — copy, assets,
+> permission justifications, the order to publish in — is
+> [CHROME-WEB-STORE.md](CHROME-WEB-STORE.md). Google Play has its own:
+> [GOOGLE-PLAY.md](GOOGLE-PLAY.md).
+
+
 **Use the v2 API.** The v1.1 endpoints that most tutorials and actions still
 use (`www.googleapis.com/upload/chromewebstore/v1.1/…`) are deprecated and stop
 working on **15 October 2026** — a pipeline written against them has a hard

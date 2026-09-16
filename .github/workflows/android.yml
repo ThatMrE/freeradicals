@@ -69,15 +69,26 @@ jobs:
         working-directory: mobile/app/android
         run: ./gradlew --no-daemon assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
 
+      # Play takes a bundle, not an APK, and splits it per device itself — so
+      # unlike the sideload APK this one keeps every ABI. It is signed with the
+      # repository's debug keystore, which Play will not accept: the upload has
+      # to be re-signed with the real upload key. See docs/GOOGLE-PLAY.md.
+      - name: Assemble the Play bundle
+        working-directory: mobile/app/android
+        run: ./gradlew --no-daemon bundleRelease
+
       - name: Report what came out
         working-directory: mobile/app/android
         run: |
           find app/build/outputs/apk -name '*.apk' -printf '%p  %sB\n'
+          find app/build/outputs/bundle -name '*.aab' -printf '%p  %sB\n'
 
       - uses: actions/upload-artifact@v4
         with:
           name: freeradicals-android-${{ github.sha }}
-          path: mobile/app/android/app/build/outputs/apk/release/*.apk
+          path: |
+            mobile/app/android/app/build/outputs/apk/release/*.apk
+            mobile/app/android/app/build/outputs/bundle/release/*.aab
           retention-days: 14
           if-no-files-found: error
 

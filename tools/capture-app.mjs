@@ -27,9 +27,18 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'site/img');
 const APP = join(ROOT, 'mobile/app/src');
-const VIEWPORT = { width: 390, height: 844 };
+
+/**
+ * Two framings of the same screens. The site wants something that fits a phone
+ * bezel on a web page; Google Play wants portrait PNGs between 320 and 3840
+ * pixels on a side, which at a real phone's pixel density means rendering the
+ * same 360-point-wide screen at 3x.
+ */
+const STORE = process.argv.includes('--store');
+const OUT = STORE ? join(ROOT, 'store/play/screenshots') : join(ROOT, 'site/img');
+const VIEWPORT = STORE ? { width: 360, height: 780 } : { width: 390, height: 844 };
+const SCALE = STORE ? 3 : 2;
 
 const POST = 'Shipped the earned-window rule today. The clock is now priced by the post: '
   + 'write more, and the gate hands back more of the feed. Five minutes is only the floor.';
@@ -107,11 +116,12 @@ const base = `http://127.0.0.1:${server.address().port}`;
 
 mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch({ channel: 'chromium' });
-const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: 2 });
+const context = await browser.newContext({ viewport: VIEWPORT, deviceScaleFactor: SCALE });
 
 async function shot(page, name) {
-  await page.screenshot({ path: join(OUT, `app-${name}.jpg`), type: 'jpeg', quality: 72 });
-  console.log(`  app-${name}.jpg`);
+  const file = join(OUT, STORE ? `${name}.png` : `app-${name}.jpg`);
+  await page.screenshot(STORE ? { path: file } : { path: file, type: 'jpeg', quality: 72 });
+  console.log(`  ${file.slice(ROOT.length + 1)}`);
 }
 
 try {

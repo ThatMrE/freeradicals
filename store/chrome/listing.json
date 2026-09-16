@@ -1,0 +1,65 @@
+{
+  "//": "Every field of the Chrome Web Store listing, ready to paste. Limits are enforced by tests/store.test.js, so an over-length field fails here rather than in the dashboard. Fields marked console-only cannot be set through the API.",
+  "itemName": "Free Radicals — post before you scroll",
+  "summary": "Social feeds stay blocked until you publish something. Posting buys you a timed window; when it runs out, you post again.",
+  "description": "Free Radicals closes the feed until you have written something.\n\nOpen X, Instagram, Reddit, LinkedIn, YouTube or any of the other networks it covers, and instead of the feed you get a compose box. Write a post, publish it, and the feed opens for five minutes. When the timer reaches zero the feed closes again, and the next window costs another post.\n\nThe point is the order: produce before you consume.\n\nTHE LONGER THE POST, THE LONGER THE WINDOW\n\nA post that just clears the 25-character minimum buys five minutes. Every fifty characters past that buys another minute, up to twenty. The price is shown while you type, so you can see what another sentence is worth before you write it. Every number in that rule — the minimum, the base window, the characters per step, the ceiling — is yours to change in settings.\n\nWHAT COUNTS AS A POST\n\n• Filler is refused. \"asdf asdf asdf\" does not clear the bar however long it is.\n• Repeats are refused. The same text cannot buy a second window, and changing the casing or the spacing does not make it new.\n• You cannot bank time. Posting again mid-window does not extend it, and reloading does not help — the window lives in storage, not in the tab.\n• Optionally, the clock can start only once your post actually goes live on the network rather than when you press the button.\n\nWHAT IT BLOCKS, AND WHAT IT LEAVES ALONE\n\nIt is not a blanket ban on a site. Reddit's front page is blocked; a thread you chose to open is not. YouTube's home page is blocked; a video you searched for plays, without the recommendation rail. Your messages, your notifications and your own profile stay reachable. The target is the infinite feed, not the network.\n\nCovers X, Facebook, Instagram, LinkedIn, Reddit, YouTube, TikTok, Threads, Bluesky and Mastodon. Each one can be turned off individually.\n\nPRIVACY\n\nThere is no server, no account, no analytics and no telemetry. The extension makes no network requests of its own. What you write is stored in your own browser, and the settings page will export or delete it. It runs on the ten sites listed in its permissions and nowhere else.\n\nOpen source, and the source is worth reading: github.com/ThatMrE/freeradicals\n\nWHAT IT DELIBERATELY DOES NOT DO\n\nIt does not stop you turning it off. It is a speed bump between the reflex and the feed, not a lock. A tool that fights its owner gets uninstalled by the end of the week.",
+  "category": "Productivity",
+  "language": "English (United States)",
+  "homepageUrl": "https://free-radicals.netlify.app",
+  "supportUrl": "https://github.com/ThatMrE/freeradicals/issues",
+  "privacyPolicyUrl": "https://free-radicals.netlify.app/privacy.html",
+  "singlePurpose": "Free Radicals blocks the feed pages of a fixed list of social networks until the user writes and publishes a post, then unblocks them for a timed window. Everything in the extension serves that one purpose.",
+  "permissionJustifications": {
+    "storage": "Stores the user's settings, the timestamp the current window ends at, and the posts they have written through the gate. All of it stays in the browser profile; none of it is sent anywhere.",
+    "alarms": "The window ends at a fixed time. An alarm wakes the extension at that moment to re-block the feed and repaint the badge, which matters because a Manifest V3 service worker is not running most of the time.",
+    "scripting": "Declared for content script registration. The extension injects its block screen and its stylesheet into the feed pages listed in host permissions.",
+    "tabs": "Opens the network's own composer in a new tab when the user chooses \"help me publish it\", and repaints the toolbar badge for the tab that is in front.",
+    "hostPermissions": "The ten social networks the extension gates, listed host by host with no wildcards. On those pages it reads the URL to decide whether the route is a feed, hides feed elements with CSS, and shows the compose screen. It does not read the timeline, messages or account.",
+    "optionalHostPermissions": "Declared but never requested. It is the seam for user-added sites such as a self-hosted Mastodon instance, and grants nothing unless the user explicitly approves that host."
+  },
+  "remoteCode": "No. The package contains every line it runs; nothing is fetched or evaluated at runtime.",
+  "dataUsage": {
+    "collected": "none",
+    "note": "No category on the disclosure form applies. The extension has no server to send anything to and makes no network requests of its own.",
+    "certifications": [
+      "I do not sell or transfer user data to third parties, outside of the approved use cases",
+      "I do not use or transfer user data for purposes that are unrelated to my item's single purpose",
+      "I do not use or transfer user data to determine creditworthiness or for lending purposes"
+    ]
+  },
+  "distribution": {
+    "visibility": "Public",
+    "regions": "All regions",
+    "price": "Free"
+  },
+  "assets": {
+    "icon": "extension/icons/icon-128.png",
+    "screenshots": [
+      "store/chrome/screenshots/01-blocked.png",
+      "store/chrome/screenshots/03-earning-more.png",
+      "store/chrome/screenshots/04-open.png",
+      "store/chrome/screenshots/07-repeat-refused.png",
+      "store/chrome/screenshots/09-settings.png"
+    ],
+    "smallPromoTile": "store/chrome/small-tile-440x280.png",
+    "marquee": "store/chrome/marquee-1400x560.png",
+    "//": "Paths are relative to the repository root. The 128x128 icon also ships inside the package, which is where the store reads it from."
+  },
+  "limits": {
+    "itemName": 75,
+    "summary": 132,
+    "description": 16000,
+    "singlePurpose": 1000,
+    "permissionJustification": 1000,
+    "screenshots": {
+      "min": 1,
+      "max": 5,
+      "sizes": [
+        "1280x800",
+        "640x400"
+      ]
+    },
+    "smallPromoTile": "440x280",
+    "marquee": "1400x560"
+  }
+}

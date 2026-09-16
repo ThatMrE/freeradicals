@@ -1,0 +1,66 @@
+{
+  "//": "Every field of the Google Play listing, ready to paste. Limits are enforced by tests/store.test.js. The declarations block is what Play asks about this app specifically; answer them the same way every time so the answers and the code never diverge.",
+  "appName": "Free Radicals",
+  "shortDescription": "Feed apps stay closed until you publish. Posting buys a timed window.",
+  "fullDescription": "Free Radicals closes your feed apps until you have written something.\n\nOpen Instagram, X, Reddit, TikTok or any other app it covers, and the block screen is there first, with a compose box. Write a post, publish it, and the feed opens for five minutes. When the timer reaches zero the block screen comes back, and the next window costs another post.\n\nThe point is the order: produce before you consume.\n\nTHE LONGER THE POST, THE LONGER THE WINDOW\n\nA post that just clears the 25-character minimum buys five minutes. Every fifty characters past that buys another minute, up to twenty. The price is on screen while you type. Every number in that rule is yours to change: the minimum, the base window, the characters per step, the ceiling.\n\nWHAT COUNTS AS A POST\n\n• Filler is refused — a wall of \"asdf\" does not clear the bar.\n• Repeats are refused. The same text cannot buy a second window.\n• You cannot bank time. Posting again mid-window does not extend it, and the window survives a restart because it is stored as a moment, not a countdown.\n\nHOW IT WORKS ON ANDROID\n\nThe app watches which app is in the foreground and shows its own screen over the ones you have chosen to gate. That needs two permissions Android only grants by hand, and the app links you straight to both settings screens and tells you which are still missing:\n\n• Usage access, to see which app is in front.\n• Display over other apps, so the block screen can cover a feed.\n\nIt never enumerates the apps on your phone. It compares the app in front against the list you chose, and nothing else.\n\nPRIVACY\n\nNo account, no server, no analytics, no ads. What you write stays on the device. The same gate runs in the browser extension, and the whole thing is open source: github.com/ThatMrE/freeradicals\n\nWHAT IT DELIBERATELY DOES NOT DO\n\nIt does not stop you turning it off, and it never hides itself. It is a speed bump between the reflex and the feed, not a lock.",
+  "category": "Productivity",
+  "tags": [
+    "Productivity",
+    "Habits",
+    "Focus"
+  ],
+  "contactEmail": "er.creates@gmail.com",
+  "website": "https://free-radicals.netlify.app",
+  "privacyPolicyUrl": "https://free-radicals.netlify.app/privacy.html",
+  "declarations": {
+    "targetAudience": "18 and over. The app has no content of its own and no social features, and an adults-only target audience keeps it outside the Families policy and its extra review surface.",
+    "contentRating": "IARC questionnaire: no violence, sexuality, language, controlled substances, gambling, or user-to-user communication. Expect Everyone / PEGI 3.",
+    "ads": "No ads.",
+    "dataSafety": {
+      "collected": "none",
+      "shared": "none",
+      "encryptedInTransit": "Not applicable — the app makes no network requests.",
+      "deletionRequest": "Not applicable — nothing leaves the device; the app's own settings screen deletes what it stored.",
+      "note": "Answer 'No' to data collection and sharing. The posts the user writes never leave the device, which under Play's definitions is not collection."
+    },
+    "permissions": {
+      "PACKAGE_USAGE_STATS": "Core feature. Reads which app is in the foreground so a gated feed app can be covered by the block screen. Granted by the user in Settings; there is no runtime prompt. No usage history is stored or transmitted.",
+      "SYSTEM_ALERT_WINDOW": "Core feature. Lets the block screen be launched over the feed app the user just opened. The screen is the app's own, is clearly labelled, never imitates another app or a system dialog, and is dismissible.",
+      "FOREGROUND_SERVICE + FOREGROUND_SERVICE_SPECIAL_USE": "The watcher must keep running while other apps are in front. No standard foreground service type describes 'check the foreground app so a feed can be gated', so the manifest declares specialUse with PROPERTY_SPECIAL_USE_FGS_SUBTYPE spelling out exactly that. Play reviews this declaration by hand — expect to answer it again in the console in the same words.",
+      "POST_NOTIFICATIONS": "The ongoing notification the foreground service is required to show, which is also how the user can tell the watcher is running.",
+      "QUERY_ALL_PACKAGES": "Not requested. The app compares one foreground package against a fixed list and never enumerates installed apps."
+    },
+    "accessibilityServices": "None used. This is worth saying out loud in review notes, because an app that covers other apps is usually an accessibility-service app, and this one is not.",
+    "deviceAndNetworkAbuse": "The app interferes with other apps only in the way its listing and its own first screen describe, only for apps the user selected, and it can be turned off or uninstalled normally."
+  },
+  "release": {
+    "format": "Android App Bundle (.aab)",
+    "signing": "Play App Signing with an upload key held only in CI secrets. The debug keystore in the repository signs local and CI builds; it must never sign an upload.",
+    "firstTrack": "Internal testing, then closed testing, then production",
+    "rollout": "Staged: 10% of users, widened once crash-free sessions hold"
+  },
+  "assets": {
+    "icon": "store/play/icon-512.png",
+    "featureGraphic": "store/play/feature-graphic-1024x500.png",
+    "phoneScreenshots": [
+      "store/play/screenshots/01-overlay.png",
+      "store/play/screenshots/02-earning.png",
+      "store/play/screenshots/03-home.png",
+      "store/play/screenshots/04-settings.png"
+    ],
+    "//": "Paths are relative to the repository root. The icon is 512x512 32-bit PNG; the feature graphic 1024x500; the screenshots portrait 1080x2340."
+  },
+  "limits": {
+    "appName": 30,
+    "shortDescription": 80,
+    "fullDescription": 4000,
+    "phoneScreenshots": {
+      "min": 2,
+      "max": 8,
+      "minSide": 320,
+      "maxSide": 3840
+    },
+    "icon": "512x512",
+    "featureGraphic": "1024x500"
+  }
+}

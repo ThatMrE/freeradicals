@@ -1,9 +1,11 @@
 # Free Radicals — mobile release lanes.
 #
-# STATUS: these lanes are complete and reviewed, but there is no React Native
-# app in this repository yet, so nothing runs them today. `node
-# tools/deploy/mobile.mjs` is the gate that says so out loud. When the app is
-# scaffolded into mobile/app, these become live with no changes beyond paths.
+# STATUS: the Android half is real — the app compiles in CI and the bundle these
+# lanes upload is built by .github/workflows/android.yml. What they still need
+# is credentials: a Play service account JSON, and an upload key that is not the
+# debug keystore. iOS cannot run at all until the two Screen Time extension
+# targets exist. `node tools/deploy/mobile.mjs` is the gate that says which.
+# The submission itself is documented in docs/GOOGLE-PLAY.md.
 #
 # Both stores are authenticated with a key rather than a password:
 #   iOS      App Store Connect API key (.p8) — no 2FA prompt, no session expiry

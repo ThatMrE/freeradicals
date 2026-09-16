@@ -150,7 +150,11 @@ readiness gate that checks the app's substance — native module registered,
 permissions declared, SDK levels current — and reports exactly what is left.
 
 The full method, per store — endpoints, credentials, review gotchas, and the
-2026 SDK deadlines — is in [docs/RELEASING.md](docs/RELEASING.md).
+2026 SDK deadlines — is in [docs/RELEASING.md](docs/RELEASING.md). The two
+submissions themselves, listing copy and assets included, are
+[docs/CHROME-WEB-STORE.md](docs/CHROME-WEB-STORE.md) and
+[docs/GOOGLE-PLAY.md](docs/GOOGLE-PLAY.md); what gets pasted into each console
+lives in `store/`, and `npm run store:assets` redraws every image in it.
 
 The e2e test is the one that matters: it stubs `x.com`, confirms the feed is
 blocked on arrival, posts through the popup, watches the feed open, expires the

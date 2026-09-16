@@ -106,9 +106,18 @@ function png(size, rgba) {
   ]);
 }
 
-mkdirSync(OUT, { recursive: true });
-for (const size of [16, 32, 48, 128]) {
-  const file = join(OUT, `icon-${size}.png`);
-  writeFileSync(file, png(size, render(size)));
-  console.log(`wrote ${file}`);
+/**
+ * Exported so the store assets are drawn from this same mark rather than from a
+ * copy of it: one definition of the logo, at every size anyone asks for.
+ */
+export { render, png };
+
+// Only write the toolbar icons when run as a script, not when imported.
+if (process.argv[1] && process.argv[1].endsWith('make-icons.mjs')) {
+  mkdirSync(OUT, { recursive: true });
+  for (const size of [16, 32, 48, 128]) {
+    const file = join(OUT, `icon-${size}.png`);
+    writeFileSync(file, png(size, render(size)));
+    console.log(`wrote ${file}`);
+  }
 }

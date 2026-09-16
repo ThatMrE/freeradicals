@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Social feeds stay closed until you publish something. Posting buys a timed window.",
   "scripts": {
-    "test": "node --test tests/core.test.js tests/platforms.test.js tests/package.test.js tests/mobile.test.js tests/app.test.js tests/portability.test.js",
+    "test": "node --test tests/core.test.js tests/platforms.test.js tests/package.test.js tests/mobile.test.js tests/app.test.js tests/portability.test.js tests/store.test.js",
     "test:e2e": "node tests/extension.e2e.mjs",
     "preflight": "node tools/preflight.mjs",
     "preflight:mobile": "node tools/preflight.mjs --mobile",
@@ -14,6 +14,7 @@
     "capture:demo": "node tools/capture-demo.mjs",
     "capture:app": "node tools/capture-app.mjs",
     "build:field": "node tools/build-field.mjs",
+    "store:assets": "node tools/capture-demo.mjs store && node tools/capture-app.mjs --store && node tools/build-store-assets.mjs",
     "check:site": "node tools/check-site.mjs",
     "check:site:render": "node tools/check-site-render.mjs",
     "build:manifest": "node tools/build-manifest.mjs",

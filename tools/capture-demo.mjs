@@ -21,6 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'site/img');
+const STORE_OUT = join(ROOT, 'store/chrome/screenshots');
 
 /**
  * `keep` is exactly the set the site shows. The flow still walks through the
@@ -41,6 +42,17 @@ const DEVICES = {
     prefix: 'phone-',
     extensionPages: false,
     keep: ['01-blocked', '03-earning-more', '04-open'],
+  },
+  // The Chrome Web Store takes screenshots at exactly 1280x800 or 640x400, and
+  // PNG rather than the JPEG the site uses. Same flow, different frame.
+  store: {
+    viewport: { width: 1280, height: 800 },
+    prefix: '',
+    scale: 1,
+    format: 'png',
+    out: STORE_OUT,
+    extensionPages: true,
+    keep: ['01-blocked', '03-earning-more', '04-open', '07-repeat-refused', '09-settings'],
   },
 };
 
@@ -75,22 +87,26 @@ const released = (page) => page.waitForFunction(
   null, { timeout: 10000 },
 );
 
-async function capture(name, page, { prefix, keep }) {
+async function capture(name, page, { prefix, keep, format = 'jpeg', out = OUT }) {
   if (!keep.includes(name)) return;
-  await page.screenshot({ path: join(OUT, `${prefix}${name}.jpg`), type: 'jpeg', quality: 72 });
-  console.log(`  ${prefix}${name}.jpg`);
+  const file = join(out, `${prefix}${name}.${format === 'png' ? 'png' : 'jpg'}`);
+  mkdirSync(dirname(file), { recursive: true });
+  await page.screenshot(
+    format === 'png' ? { path: file } : { path: file, type: 'jpeg', quality: 72 },
+  );
+  console.log(`  ${file.slice(ROOT.length + 1)}`);
 }
 
 async function run(deviceName) {
   const device = DEVICES[deviceName];
-  const { viewport, extensionPages } = device;
+  const { viewport, extensionPages, scale = 2 } = device;
   console.log(`${deviceName} ${viewport.width}x${viewport.height}`);
 
   const context = await chromium.launchPersistentContext(mkdtempSync(join(tmpdir(), 'fr-shot-')), {
     channel: 'chromium',
     headless: true,
     viewport,
-    deviceScaleFactor: 2,
+    deviceScaleFactor: scale,
     args: [`--disable-extensions-except=${ROOT}`, `--load-extension=${ROOT}`],
   });
 
@@ -151,7 +167,7 @@ async function run(deviceName) {
 
     if (extensionPages) {
       const popup = await context.newPage();
-      await popup.setViewportSize({ width: 420, height: 560 });
+      await popup.setViewportSize(device.format === 'png' ? viewport : { width: 420, height: 560 });
       await popup.goto(`chrome-extension://${extensionId}/extension/ui/popup.html`);
       await popup.waitForSelector('#post');
       await popup.waitForTimeout(500);

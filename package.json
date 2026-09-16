@@ -12,6 +12,8 @@
     "build": "node tools/build-manifest.mjs && node tools/make-icons.mjs && node tools/build.mjs",
     "build:site": "npm run build && node tools/build-site.mjs",
     "capture:demo": "node tools/capture-demo.mjs",
+    "capture:app": "node tools/capture-app.mjs",
+    "build:field": "node tools/build-field.mjs",
     "check:site": "node tools/check-site.mjs",
     "check:site:render": "node tools/check-site-render.mjs",
     "build:manifest": "node tools/build-manifest.mjs",
@@ -23,7 +25,11 @@
   },
   "devDependencies": {
     "@babel/parser": "^8.0.4",
+    "esbuild": "^0.28.2",
     "playwright": "^1.56.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-native-web": "^0.21.2",
     "web-ext": "^10.6.0"
   }
 }

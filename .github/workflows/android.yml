@@ -1,0 +1,103 @@
+# Builds the Android app.
+#
+# The Android SDK cannot be installed in every environment this repository is
+# worked on from, so the build that decides whether the app compiles is this
+# one. It produces an APK you can sideload, signed with the debug keystore that
+# ships in the repository — enough to install and use, not enough to publish.
+name: Android
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - 'core/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    name: APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - run: npm ci
+        working-directory: mobile/app
+
+      # The JS half is worth failing on before Gradle spends ten minutes on the
+      # native half: this is also the step that proves Metro can still see
+      # core/ and mobile/bridge/ outside the app directory.
+      - name: Bundle the JavaScript
+        working-directory: mobile/app
+        run: |
+          mkdir -p /tmp/bundle/assets /tmp/bundle/res
+          npx react-native bundle \
+            --platform android \
+            --dev false \
+            --entry-file index.js \
+            --bundle-output /tmp/bundle/assets/index.android.bundle \
+            --assets-dest /tmp/bundle/res
+          ls -la /tmp/bundle/assets
+
+      # Release rather than debug: the debug APK expects a Metro server on the
+      # other end of a cable, so it is useless to anyone who just wants to
+      # install the thing. Release embeds the bundle. It is still debug-signed.
+      # Arm only. The other two ABIs in gradle.properties are for emulators, and
+      # carrying them doubles the download for a file whose whole purpose is to
+      # be installed on a phone.
+      - name: Assemble release APK
+        working-directory: mobile/app/android
+        run: ./gradlew --no-daemon assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Report what came out
+        working-directory: mobile/app/android
+        run: |
+          find app/build/outputs/apk -name '*.apk' -printf '%p  %sB\n'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: freeradicals-android-${{ github.sha }}
+          path: mobile/app/android/app/build/outputs/apk/release/*.apk
+          retention-days: 14
+          if-no-files-found: error
+
+      # An artifact needs a GitHub login to download, which makes it useless as
+      # "here, try it". A pre-release under a fixed tag gives the APK one public
+      # URL that always points at the newest build of the default branch.
+      - name: Publish the APK to the rolling pre-release
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apk=$(find mobile/app/android/app/build/outputs/apk/release -name '*.apk' | head -1)
+          cp "$apk" freeradicals-android.apk
+          gh release delete android-latest --yes --cleanup-tag || true
+          gh release create android-latest freeradicals-android.apk \
+            --prerelease \
+            --title "Android build (latest master)" \
+            --notes "Built from ${GITHUB_SHA} by .github/workflows/android.yml.
+
+          Signed with the debug keystore in the repository, so it installs by sideloading
+          and is not a Play Store build. Android will ask you to allow installation from
+          this source, and the app then needs usage access and display-over-other-apps,
+          both granted by hand in Settings."

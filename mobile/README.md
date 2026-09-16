@@ -11,11 +11,17 @@ app/      the React Native app — src/, android/, ios/
 fastlane/ the release lanes for both stores
 ```
 
-**Neither platform has been built here.** There is no Android SDK and no Xcode
-in this environment, so `tests/app.test.js` covers what can be checked without
-compiling — that every source parses, every import resolves, and every native
-method JavaScript calls actually exists and is exported on that platform. The
-first `npm run android` is still the first real test.
+**Android is built by CI; iOS is not built at all.** No environment this
+repository is worked on from can install the Android SDK, so
+`.github/workflows/android.yml` is where `assembleRelease` actually runs — it
+bundles the JavaScript first, which is also what proves Metro still sees
+`core/` and `bridge/` from outside `app/`. iOS still needs Xcode for its two
+Screen Time extension targets.
+
+Compiling is not the same as running, and nothing here has run on a device:
+`tests/app.test.js` covers what a build does not catch — that every source
+parses, every import resolves, and every native method JavaScript calls exists
+and is exported on that platform, which is the failure that fails silently.
 
 ## What ports for free
 

@@ -62,9 +62,12 @@ jobs:
       # Release rather than debug: the debug APK expects a Metro server on the
       # other end of a cable, so it is useless to anyone who just wants to
       # install the thing. Release embeds the bundle. It is still debug-signed.
+      # Arm only. The other two ABIs in gradle.properties are for emulators, and
+      # carrying them doubles the download for a file whose whole purpose is to
+      # be installed on a phone.
       - name: Assemble release APK
         working-directory: mobile/app/android
-        run: ./gradlew --no-daemon assembleRelease
+        run: ./gradlew --no-daemon assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
 
       - name: Report what came out
         working-directory: mobile/app/android

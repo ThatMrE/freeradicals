@@ -188,12 +188,15 @@ that cannot be hand-authored safely, so it is done once, in Xcode, by a person �
 `mobile/app/ios/README.md` is the four-step recipe. Their Swift sources are
 finished and waiting.
 
-**What has not been verified.** Nothing here has been compiled: this
-environment has no Android SDK and no Xcode. `tests/app.test.js` covers what
-can be checked without a build — every source parses, every relative import
-resolves, and every native method JavaScript calls exists *and* is exported on
-that platform, which is the failure that would otherwise be silent. The first
-`npm run android` is the first real test.
+**What has and has not been verified.** Android compiles:
+`.github/workflows/android.yml` bundles the JavaScript and runs
+`assembleRelease` on every push, and publishes the APK to a rolling
+pre-release. That is a build, not a run — nothing here has been on a device,
+and iOS has not been compiled at all, since this environment has neither the
+Android SDK nor Xcode. `tests/app.test.js` still covers what a green build
+would not catch: an import that resolves to nothing on a path the bundler did
+not walk, and a native method JavaScript calls that does not exist and so
+fails silently.
 
 Once the iOS targets exist, `mobile/fastlane/Fastfile` runs unchanged —
 `fastlane ios beta`, `fastlane android beta`.

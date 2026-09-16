@@ -107,9 +107,12 @@ Both work because a window is stored as an absolute timestamp: native code gets
 one number and needs no running JavaScript, which is why the mobile port needed
 no new gate logic at all.
 
-Nothing mobile has been compiled here — there is no Android SDK or Xcode in
-CI — so the tests cover parsing, import resolution, and the JavaScript↔native
-method contract instead. Full guide: [mobile/README.md](mobile/README.md).
+**Android compiles.** `.github/workflows/android.yml` bundles the JavaScript
+and assembles a release APK on every push, and publishes it to a rolling
+pre-release you can sideload. iOS has not been built: it needs Xcode for the
+two Screen Time extension targets. The unit tests still cover parsing, import
+resolution and the JavaScript↔native method contract, because those failures
+are silent rather than loud. Full guide: [mobile/README.md](mobile/README.md).
 
 ## Development
 

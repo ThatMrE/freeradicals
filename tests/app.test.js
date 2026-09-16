@@ -16,9 +16,12 @@ const read = (rel) => readFileSync(join(ROOT, rel), 'utf8');
 /**
  * The React Native app.
  *
- * None of this can be bundled or compiled here — there is no Android SDK and
- * no Xcode — so these tests cover the failures that would otherwise only show
- * up on a device: a syntax error, an import that resolves to nothing, and a
+ * Android is compiled by .github/workflows/android.yml, because no environment
+ * this repository is worked on from can install the Android SDK; iOS is not
+ * compiled anywhere yet. Neither has run on a device.
+ *
+ * So these tests cover what a successful build still would not catch: an
+ * import that resolves to nothing on a path the bundler did not walk, and a
  * JavaScript call to a native method that does not exist. That last one is the
  * nastiest, because it fails silently: the call simply never arrives, and the
  * app looks like it is working while nothing is being blocked.

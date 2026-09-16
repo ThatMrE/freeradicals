@@ -75,6 +75,7 @@ try {
           natural: img.naturalWidth / img.naturalHeight,
           drawn: box.width / box.height,
           size: `${Math.round(box.width)}x${Math.round(box.height)}`,
+          cover: getComputedStyle(img).objectFit === 'cover',
         };
       }));
 
@@ -84,6 +85,10 @@ try {
           problems.push(`${where}: ${img.src} did not load`);
           continue;
         }
+        // A cover image is cropped on purpose — the background field fills the
+        // viewport whatever shape that is — so its box says nothing about
+        // whether it is drawn correctly. It still has to load.
+        if (img.cover) continue;
         const off = Math.abs(img.natural - img.drawn) / img.natural;
         if (off > TOLERANCE) {
           problems.push(
@@ -98,6 +103,39 @@ try {
       await context.close();
     }
   }
+
+  /*
+   * The background is a chain reaction, and a chain reaction that has stopped
+   * looks exactly like a still picture — which is how the first version shipped
+   * past every other check here. SMIL drops an animation with malformed
+   * keyTimes silently, so the only honest test is whether the pixels change.
+   */
+  const motion = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await motion.newPage();
+  await page.goto(base, { waitUntil: 'load' });
+  await page.waitForTimeout(1500);
+  if (await page.$('.field')) {
+    checks += 1;
+    const first = await page.screenshot();
+    await page.waitForTimeout(2000);
+    const second = await page.screenshot();
+    if (first.equals(second)) problems.push('/: the background never moves — its animation is not running');
+  } else {
+    problems.push('/: the background field is gone');
+  }
+  await motion.close();
+
+  // Decoration is not worth a headache: asked for less motion, it is not there.
+  const still = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  const stillPage = await still.newPage();
+  await stillPage.goto(base, { waitUntil: 'load' });
+  await stillPage.waitForTimeout(600);
+  const stillShown = await stillPage.evaluate(() => {
+    const field = document.querySelector('.field');
+    return field ? getComputedStyle(field).display !== 'none' : false;
+  });
+  if (stillShown) problems.push('/: the background still renders under prefers-reduced-motion');
+  await still.close();
 } finally {
   await browser.close();
   server.close();

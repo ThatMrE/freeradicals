@@ -13,6 +13,7 @@
     "build:site": "npm run build && node tools/build-site.mjs",
     "capture:demo": "node tools/capture-demo.mjs",
     "capture:app": "node tools/capture-app.mjs",
+    "build:field": "node tools/build-field.mjs",
     "check:site": "node tools/check-site.mjs",
     "check:site:render": "node tools/check-site-render.mjs",
     "build:manifest": "node tools/build-manifest.mjs",
